@@ -224,9 +224,17 @@ module.exports = exports = {
 				return;
 			}
 			const rect = range.getBoundingClientRect();
+			const buttonWidth = 120;
+			const buttonHeight = 32;
+			let left = rect.right - buttonWidth;
+			left = Math.min( Math.max( 8, left ), window.innerWidth - buttonWidth - 8 );
+			let top = rect.bottom + 6;
+			if ( top + buttonHeight > window.innerHeight - 8 ) {
+				top = Math.max( rect.top - buttonHeight - 6, 8 );
+			}
 			this.anchorButtonStyle = {
-				top: `${Math.max( rect.top - 36, 8 )}px`,
-				left: `${Math.max( rect.left, 8 )}px`
+				top: `${top}px`,
+				left: `${left}px`
 			};
 			this.capturedAnchor = anchor;
 			this.showAnchorButton = true;
