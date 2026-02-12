@@ -84,15 +84,24 @@
 								<p v-if="thread.orphaned" class="pagecomments-note">
 									{{ msg( 'pagecomments-ui-orphaned' ) }}
 								</p>
-								<ul class="pagecomments-comments">
-									<li v-for="comment in thread.comments" :key="comment.id">
-										<div class="pagecomments-comment-meta">
-											<strong>{{ comment.actorName }}</strong>
-											<span>{{ formatTimestamp( comment.createdAt ) }}</span>
-										</div>
-										<p class="pagecomments-comment-body">{{ comment.body }}</p>
-									</li>
-								</ul>
+									<ul class="pagecomments-comments">
+										<li v-for="comment in thread.comments" :key="comment.id">
+											<div class="pagecomments-comment-meta">
+												<div class="pagecomments-comment-meta-main">
+													<strong>{{ comment.actorName }}</strong>
+													<span>{{ formatTimestamp( comment.createdAt ) }}</span>
+												</div>
+												<button
+													v-if="canDeleteComment( comment )"
+													class="pagecomments-btn pagecomments-btn-quiet pagecomments-btn-danger"
+													@click.stop="deleteComment( thread.id, comment.id )"
+												>
+													{{ msg( 'pagecomments-ui-delete' ) }}
+												</button>
+											</div>
+											<p class="pagecomments-comment-body">{{ comment.body }}</p>
+										</li>
+									</ul>
 								<div class="pagecomments-actions">
 									<button
 										v-if="canWrite"
@@ -143,6 +152,7 @@
 const highlight = require( '../highlight.js' );
 const panelState = require( '../panelState.js' );
 const anchorUtil = require( '../anchor.js' );
+const threadView = require( '../threadView.js' );
 
 module.exports = exports = {
 	name: 'PageCommentsApp',
@@ -373,7 +383,7 @@ module.exports = exports = {
 				this.replyBody[threadId] = '';
 			}
 		},
-		async submitReply( threadId ) {
+			async submitReply( threadId ) {
 			const body = this.replyBody[threadId] || '';
 			if ( !body.trim() ) {
 				return;
@@ -399,11 +409,48 @@ module.exports = exports = {
 				}
 				this.replyBody[threadId] = '';
 				this.replyOpen[threadId] = false;
-			} catch ( e ) {
-				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
-			}
-		},
-		async setThreadState( threadId, state ) {
+				} catch ( e ) {
+					this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
+				}
+			},
+			canDeleteComment( comment ) {
+				if ( !comment || !Object.prototype.hasOwnProperty.call( comment, 'canDelete' ) ) {
+					return false;
+				}
+				const value = comment.canDelete;
+				return value === '' || value === true || value === 1 || value === '1';
+			},
+			async deleteComment( threadId, commentId ) {
+				this.errorMessage = '';
+				try {
+					const api = new mw.Api();
+					const data = await api.postWithToken( 'csrf', {
+						action: 'pagecomments',
+						pcaction: 'deletecomment',
+						commentid: commentId,
+						format: 'json'
+					} );
+					const payload = data && data.pagecomments ? data.pagecomments : {};
+					const updated = panelState.removeComment( this.threads, threadId, commentId );
+					if ( updated.removed ) {
+						if ( updated.threadDeleted ) {
+							delete this.collapsedThreads[threadId];
+							delete this.replyOpen[threadId];
+							delete this.replyBody[threadId];
+							if ( this.selectedThreadId === threadId ) {
+								this.selectedThreadId = null;
+							}
+						}
+						this.$nextTick( () => this.applyHighlights() );
+						this.scheduleBackgroundSync();
+					} else if ( payload.threadId ) {
+						await this.fetchThreads();
+					}
+				} catch ( e ) {
+					this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
+				}
+			},
+			async setThreadState( threadId, state ) {
 			this.errorMessage = '';
 			try {
 				const api = new mw.Api();
@@ -437,62 +484,16 @@ module.exports = exports = {
 				marker.scrollIntoView( { behavior: 'smooth', block: 'center' } );
 			}
 		},
-		applyHighlights() {
-			const root = anchorUtil.getArticleRoot();
-			if ( !root ) {
-				return;
+			applyHighlights() {
+				threadView.applyHighlights(
+					this.threads,
+					this.selectedThreadId,
+					( threadId ) => this.selectThread( threadId )
+				);
+			},
+			formatTimestamp( mwTimestamp ) {
+				return threadView.formatTimestamp( mwTimestamp );
 			}
-			highlight.clearHighlights();
-			const map = highlight.buildTextMap( root );
-			if ( !map.text ) {
-				return;
-			}
-
-			const matches = [];
-			for ( const thread of this.threads ) {
-				const exact = thread.anchor && thread.anchor.exact ? thread.anchor.exact : '';
-				if ( !exact ) {
-					thread.orphaned = true;
-					continue;
-				}
-				const offset = highlight.resolveAnchorOffset( map.text, thread.anchor );
-				if ( offset < 0 ) {
-					thread.orphaned = true;
-					continue;
-				}
-				matches.push( {
-					threadId: thread.id,
-					state: thread.state || 'open',
-					start: offset,
-					end: offset + exact.length
-				} );
-				thread.orphaned = false;
-			}
-
-			const applied = highlight.applyMatchesToDom(
-				map,
-				matches,
-				( threadId ) => this.selectThread( threadId )
-			);
-			const appliedIds = new Set( applied.map( ( item ) => item.threadId ) );
-			for ( const thread of this.threads ) {
-				if ( !appliedIds.has( thread.id ) ) {
-					thread.orphaned = true;
-				}
-			}
-			highlight.updateSelectedHighlightClasses( this.selectedThreadId );
-		},
-		formatTimestamp( mwTimestamp ) {
-			if ( !mwTimestamp || mwTimestamp.length < 12 ) {
-				return '';
-			}
-			const y = mwTimestamp.slice( 0, 4 );
-			const m = mwTimestamp.slice( 4, 6 );
-			const d = mwTimestamp.slice( 6, 8 );
-			const hh = mwTimestamp.slice( 8, 10 );
-			const mm = mwTimestamp.slice( 10, 12 );
-			return `${y}-${m}-${d} ${hh}:${mm}`;
 		}
-	}
-};
+	};
 </script>

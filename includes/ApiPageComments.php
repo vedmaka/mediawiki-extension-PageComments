@@ -8,10 +8,12 @@ use MediaWiki\Title\Title;
 use Wikimedia\ParamValidator\ParamValidator;
 
 class ApiPageComments extends ApiBase {
+	use ApiPageCommentsListTrait;
 
 	private const ACTION_LIST = 'list';
 	private const ACTION_CREATE = 'create';
 	private const ACTION_REPLY = 'reply';
+	private const ACTION_DELETE_COMMENT = 'deletecomment';
 	private const ACTION_RESOLVE = 'resolve';
 	private const ACTION_REOPEN = 'reopen';
 
@@ -24,6 +26,11 @@ class ApiPageComments extends ApiBase {
 
 		if ( $action === self::ACTION_LIST ) {
 			$this->runList( (int)$params['pageid'] );
+			return;
+		}
+
+		if ( $action === self::ACTION_DELETE_COMMENT ) {
+			$this->runDeleteComment( (int)$params['commentid'] );
 			return;
 		}
 
@@ -67,12 +74,13 @@ class ApiPageComments extends ApiBase {
 		return [
 			'pcaction' => [
 				ParamValidator::PARAM_TYPE => [
-					self::ACTION_LIST,
-					self::ACTION_CREATE,
-					self::ACTION_REPLY,
-					self::ACTION_RESOLVE,
-					self::ACTION_REOPEN
-				],
+						self::ACTION_LIST,
+						self::ACTION_CREATE,
+						self::ACTION_REPLY,
+						self::ACTION_DELETE_COMMENT,
+						self::ACTION_RESOLVE,
+						self::ACTION_REOPEN
+					],
 				ParamValidator::PARAM_REQUIRED => true,
 			],
 			'pageid' => [
@@ -81,12 +89,15 @@ class ApiPageComments extends ApiBase {
 			'threadid' => [
 				ParamValidator::PARAM_TYPE => 'integer',
 			],
-			'parentcommentid' => [
-				ParamValidator::PARAM_TYPE => 'integer',
-			],
-			'anchor' => [
-				ParamValidator::PARAM_TYPE => 'text',
-			],
+				'parentcommentid' => [
+					ParamValidator::PARAM_TYPE => 'integer',
+				],
+				'commentid' => [
+					ParamValidator::PARAM_TYPE => 'integer',
+				],
+				'anchor' => [
+					ParamValidator::PARAM_TYPE => 'text',
+				],
 			'body' => [
 				ParamValidator::PARAM_TYPE => 'text',
 			],
@@ -108,95 +119,6 @@ class ApiPageComments extends ApiBase {
 	public function isWriteMode() {
 		$action = $this->getMain()->getRequest()->getVal( 'pcaction', self::ACTION_LIST );
 		return $action !== self::ACTION_LIST;
-	}
-
-	private function runList( int $pageId ): void {
-		if ( $pageId <= 0 ) {
-			$this->dieWithError( 'pagecomments-api-error-missing-pageid', 'pagecomments-missing-pageid' );
-		}
-
-		$title = $this->getTitleFromPageId( $pageId );
-		$this->assertMainNamespace( $title );
-
-		$dbr = MediaWikiServices::getInstance()->getConnectionProvider()->getReplicaDatabase();
-		$threadRows = $dbr->newSelectQueryBuilder()
-			->select( [
-				'pct_id',
-				'pct_page_id',
-				'pct_rev_id',
-				'pct_anchor_json',
-				'pct_anchor_excerpt',
-				'pct_state',
-				'pct_created_at',
-				'pct_updated_at',
-				'thread_actor_name' => 'thread_actor.actor_name',
-			] )
-			->from( 'pagecomments_thread' )
-			->join( 'actor', 'thread_actor', 'thread_actor.actor_id = pct_actor_id' )
-			->where( [
-				'pct_page_id' => $pageId,
-				'pct_namespace' => NS_MAIN
-			] )
-			->orderBy( 'pct_updated_at', 'DESC' )
-			->caller( __METHOD__ )
-			->fetchResultSet();
-
-		$threads = [];
-		$threadIds = [];
-		foreach ( $threadRows as $row ) {
-			$threadId = (int)$row->pct_id;
-			$threadIds[] = $threadId;
-			$threads[$threadId] = [
-				'id' => $threadId,
-				'pageId' => (int)$row->pct_page_id,
-				'revId' => (int)$row->pct_rev_id,
-				'state' => (string)$row->pct_state,
-				'createdAt' => (string)$row->pct_created_at,
-				'updatedAt' => (string)$row->pct_updated_at,
-				'actorName' => (string)$row->thread_actor_name,
-				'anchor' => $this->decodeAnchor( (string)$row->pct_anchor_json ),
-				'excerpt' => (string)$row->pct_anchor_excerpt,
-				'comments' => [],
-			];
-		}
-
-		if ( $threadIds ) {
-			$commentRows = $dbr->newSelectQueryBuilder()
-				->select( [
-					'pcc_id',
-					'pcc_thread_id',
-					'pcc_parent_comment_id',
-					'pcc_body',
-					'pcc_created_at',
-					'comment_actor_name' => 'comment_actor.actor_name',
-				] )
-				->from( 'pagecomments_comment' )
-				->join( 'actor', 'comment_actor', 'comment_actor.actor_id = pcc_actor_id' )
-				->where( [ 'pcc_thread_id' => $threadIds ] )
-				->orderBy( 'pcc_created_at', 'ASC' )
-				->caller( __METHOD__ )
-				->fetchResultSet();
-
-			foreach ( $commentRows as $row ) {
-				$threadId = (int)$row->pcc_thread_id;
-				if ( !isset( $threads[$threadId] ) ) {
-					continue;
-				}
-
-				$threads[$threadId]['comments'][] = [
-					'id' => (int)$row->pcc_id,
-					'threadId' => $threadId,
-					'parentCommentId' => $row->pcc_parent_comment_id !== null ? (int)$row->pcc_parent_comment_id : null,
-					'body' => (string)$row->pcc_body,
-					'createdAt' => (string)$row->pcc_created_at,
-					'actorName' => (string)$row->comment_actor_name,
-				];
-			}
-		}
-
-		$this->getResult()->addValue( null, 'pagecomments', [
-			'threads' => array_values( $threads ),
-		] );
 	}
 
 	private function runCreate( int $pageId, string $anchorJson, string $body ): void {
@@ -335,6 +257,84 @@ class ApiPageComments extends ApiBase {
 			'action' => self::ACTION_REPLY,
 			'threadId' => $threadId,
 			'commentId' => $commentId,
+		] );
+	}
+
+	private function runDeleteComment( int $commentId ): void {
+		if ( $commentId <= 0 ) {
+			$this->dieWithError( 'pagecomments-api-error-missing-commentid', 'pagecomments-missing-commentid' );
+		}
+		$user = $this->getUser();
+		if ( !$user->isNamed() ) {
+			$this->dieWithError( 'apierror-mustbeloggedin-generic', 'notloggedin' );
+		}
+		$userActorId = (int)$user->getActorId();
+		$isModerator = MediaWikiServices::getInstance()
+			->getPermissionManager()
+			->userHasRight( $user, 'pagecomments-moderate' );
+		$dbw = MediaWikiServices::getInstance()->getConnectionProvider()->getPrimaryDatabase();
+		$row = $dbw->newSelectQueryBuilder()
+			->select( [ 'pcc_id', 'pcc_thread_id', 'pcc_actor_id', 'pct_namespace' ] )
+			->from( 'pagecomments_comment' )
+			->join( 'pagecomments_thread', null, 'pct_id = pcc_thread_id' )
+			->where( [
+				'pcc_id' => $commentId,
+				'pcc_deleted_at' => null
+			] )
+			->caller( __METHOD__ )
+			->fetchRow();
+		if ( !$row ) {
+			$this->dieWithError( 'pagecomments-api-error-comment-not-found', 'pagecomments-comment-not-found' );
+		}
+		if ( (int)$row->pct_namespace !== NS_MAIN ) {
+			$this->dieWithError( 'pagecomments-api-error-main-namespace-only', 'pagecomments-main-namespace-only' );
+		}
+		if ( !$isModerator && ( $userActorId <= 0 || $userActorId !== (int)$row->pcc_actor_id ) ) {
+			$this->dieWithError(
+				'pagecomments-api-error-permission-denied',
+				'pagecomments-permission-denied'
+			);
+		}
+		$threadId = (int)$row->pcc_thread_id;
+		$timestamp = $dbw->timestamp();
+		$dbw->startAtomic( __METHOD__ );
+		$dbw->update(
+			'pagecomments_comment',
+			[ 'pcc_deleted_at' => $timestamp ],
+			[
+				'pcc_id' => $commentId,
+				'pcc_deleted_at' => null
+			],
+			__METHOD__
+		);
+		$remaining = (int)$dbw->newSelectQueryBuilder()
+			->select( 'COUNT(*)' )
+			->from( 'pagecomments_comment' )
+			->where( [
+				'pcc_thread_id' => $threadId,
+				'pcc_deleted_at' => null
+			] )
+			->caller( __METHOD__ )
+			->fetchField();
+		$threadDeleted = false;
+		if ( $remaining <= 0 ) {
+			// Drop empty thread so anchor highlight and overlap checks are cleared immediately.
+			$dbw->delete( 'pagecomments_thread', [ 'pct_id' => $threadId ], __METHOD__ );
+			$threadDeleted = true;
+		} else {
+			$dbw->update(
+				'pagecomments_thread',
+				[ 'pct_updated_at' => $timestamp ],
+				[ 'pct_id' => $threadId ],
+				__METHOD__
+			);
+		}
+		$dbw->endAtomic( __METHOD__ );
+		$this->getResult()->addValue( null, 'pagecomments', [
+			'action' => self::ACTION_DELETE_COMMENT,
+			'commentId' => $commentId,
+			'threadId' => $threadId,
+			'threadDeleted' => $threadDeleted,
 		] );
 	}
 
@@ -491,8 +491,4 @@ class ApiPageComments extends ApiBase {
 		}
 	}
 
-	private function decodeAnchor( string $anchorJson ): ?array {
-		$anchor = json_decode( $anchorJson, true );
-		return is_array( $anchor ) ? $anchor : null;
-	}
 }

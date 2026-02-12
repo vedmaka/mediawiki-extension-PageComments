@@ -17,6 +17,7 @@
 	"pagecomments-ui-cancel": "Cancel",
 	"pagecomments-ui-submit": "Submit",
 	"pagecomments-ui-reply": "Reply",
+	"pagecomments-ui-delete": "Delete",
 	"pagecomments-ui-resolve": "Resolve",
 	"pagecomments-ui-reopen": "Reopen",
 	"pagecomments-ui-show-thread": "Show thread",
@@ -28,6 +29,7 @@
 	"pagecomments-api-error-unknown-action": "Unknown pagecomments action.",
 	"pagecomments-api-error-missing-pageid": "Missing or invalid page id.",
 	"pagecomments-api-error-missing-threadid": "Missing or invalid thread id.",
+	"pagecomments-api-error-missing-commentid": "Missing or invalid comment id.",
 	"pagecomments-api-error-invalid-page": "Target page does not exist.",
 	"pagecomments-api-error-main-namespace-only": "Comments allowed only in main namespace.",
 	"pagecomments-api-error-invalid-anchor": "Invalid comment anchor payload.",
@@ -36,6 +38,7 @@
 	"pagecomments-api-error-empty-body": "Comment text cannot be empty.",
 	"pagecomments-api-error-body-too-long": "Comment text is too long.",
 	"pagecomments-api-error-thread-not-found": "Comment thread not found.",
+	"pagecomments-api-error-comment-not-found": "Comment not found.",
 	"pagecomments-api-error-parent-comment-not-found": "Parent comment not found.",
 	"pagecomments-api-error-permission-denied": "You are not allowed to write page comments."
 }

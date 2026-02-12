@@ -45,16 +45,17 @@ function buildThreadFromCreateResult( options ) {
 		excerpt: pendingAnchor.exact,
 		orphaned: false,
 		comments: [
-			{
-				id: commentId,
-				threadId,
-				parentCommentId: null,
-				body,
-				createdAt: timestamp,
-				actorName
-			}
-		]
-	};
+				{
+					id: commentId,
+					threadId,
+					parentCommentId: null,
+					body,
+					createdAt: timestamp,
+					actorName,
+					canDelete: true
+				}
+			]
+		};
 }
 
 function appendReply( threads, threadId, commentId, body ) {
@@ -70,7 +71,8 @@ function appendReply( threads, threadId, commentId, body ) {
 		parentCommentId: null,
 		body,
 		createdAt: timestamp,
-		actorName
+		actorName,
+		canDelete: true
 	} );
 	threads[index].updatedAt = timestamp;
 	moveThreadToTop( threads, threadId );
@@ -88,8 +90,29 @@ function setThreadState( threads, threadId, state ) {
 	return true;
 }
 
+function removeComment( threads, threadId, commentId ) {
+	const index = findThreadIndex( threads, threadId );
+	if ( index < 0 ) {
+		return { removed: false, threadDeleted: false };
+	}
+	const thread = threads[index];
+	const oldCount = thread.comments.length;
+	thread.comments = thread.comments.filter( ( comment ) => comment.id !== commentId );
+	if ( thread.comments.length === oldCount ) {
+		return { removed: false, threadDeleted: false };
+	}
+	if ( thread.comments.length === 0 ) {
+		threads.splice( index, 1 );
+		return { removed: true, threadDeleted: true };
+	}
+	thread.updatedAt = getNowTimestamp();
+	moveThreadToTop( threads, threadId );
+	return { removed: true, threadDeleted: false };
+}
+
 module.exports = {
 	buildThreadFromCreateResult,
 	appendReply,
-	setThreadState
+	setThreadState,
+	removeComment
 };

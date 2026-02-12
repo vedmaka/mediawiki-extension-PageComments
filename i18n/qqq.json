@@ -9,6 +9,7 @@
 	"right-pagecomments-moderate": "User right label: can moderate page comments.",
 	"pagecomments-ui-title": "Sidebar title for page comments panel.",
 	"pagecomments-ui-close": "Label for button that hides the off-canvas comments panel.",
+	"pagecomments-ui-delete": "Label for action that deletes a single comment inside a thread.",
 	"pagecomments-ui-show-thread": "Label for action that expands a collapsed thread in panel.",
 	"pagecomments-ui-hide-thread": "Label for action that collapses an expanded thread in panel.",
 	"pagecomments-ui-overlap-selection": "Error text shown when user selects text that overlaps an existing comment range.",

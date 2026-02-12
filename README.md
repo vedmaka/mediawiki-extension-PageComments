@@ -5,6 +5,7 @@ Inline page comments for MediaWiki main namespace pages.
 MVP features:
 - Logged-in users can create comment threads from selected text.
 - Users can reply inside threads.
+- Users can delete their own comments (or any comment with `pagecomments-moderate`).
 - Users can resolve/reopen threads.
 - Client UI shown on `NS_MAIN` view pages.
 
@@ -40,6 +41,7 @@ Action API: `action=pagecomments`
 - `pcaction=list&pageid=<id>`
 - `pcaction=create&pageid=<id>&anchor=<json>&body=<text>&token=<csrf>`
 - `pcaction=reply&threadid=<id>&body=<text>&token=<csrf>`
+- `pcaction=deletecomment&commentid=<id>&token=<csrf>`
 - `pcaction=resolve&threadid=<id>&token=<csrf>`
 - `pcaction=reopen&threadid=<id>&token=<csrf>`
 

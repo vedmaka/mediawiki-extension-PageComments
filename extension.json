@@ -45,6 +45,7 @@
 				"anchor.js",
 				"highlight.js",
 				"panelState.js",
+				"threadView.js",
 				"components/PageCommentsApp.vue"
 			],
 			"styles": [
@@ -66,6 +67,7 @@
 				"pagecomments-ui-cancel",
 				"pagecomments-ui-submit",
 				"pagecomments-ui-reply",
+				"pagecomments-ui-delete",
 				"pagecomments-ui-resolve",
 				"pagecomments-ui-reopen",
 				"pagecomments-ui-show-thread",
