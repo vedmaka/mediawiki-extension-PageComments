@@ -64,7 +64,11 @@
 							v-for="thread in threads"
 							:key="thread.id"
 							class="pagecomments-thread"
-							:class="{ 'is-selected': selectedThreadId === thread.id }"
+							:class="{
+								'is-selected': selectedThreadId === thread.id,
+								'is-open': thread.state === 'open',
+								'is-resolved': thread.state === 'resolved'
+							}"
 							@click="selectThread( thread.id )"
 						>
 							<div class="pagecomments-thread-head">

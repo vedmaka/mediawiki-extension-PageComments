@@ -44,7 +44,7 @@
 
 .pagecomments-panel-header h2 {
 	margin: 0;
-	font-size: 16px;
+	font-size: 17px;
 }
 
 .pagecomments-panel-close {
@@ -53,8 +53,14 @@
 	color: #202122;
 	border-radius: 4px;
 	padding: 3px 8px;
-	font-size: 12px;
+	font-size: 13px;
 	cursor: pointer;
+	transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.pagecomments-panel-close:hover {
+	background: #f8f9fa;
+	border-color: #72777d;
 }
 
 .pagecomments-panel-body {
@@ -68,6 +74,7 @@
 	padding: 8px;
 	margin: 0 0 10px;
 	background: #f8f9fb;
+	border-left-width: 4px;
 }
 
 .pagecomments-thread.is-selected {
@@ -75,11 +82,19 @@
 	background: #eef4fc;
 }
 
+.pagecomments-thread.is-open {
+	border-left-color: #4a79be;
+}
+
+.pagecomments-thread.is-resolved {
+	border-left-color: #4c8f59;
+}
+
 .pagecomments-thread-head {
 	display: flex;
 	justify-content: space-between;
 	align-items: baseline;
-	font-size: 12px;
+	font-size: 13px;
 	margin-bottom: 6px;
 }
 
@@ -95,8 +110,15 @@
 	color: #2a4b8d;
 	border-radius: 4px;
 	padding: 2px 8px;
-	font-size: 11px;
+	font-size: 12px;
 	cursor: pointer;
+	transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.pagecomments-thread-toggle:hover {
+	background: #eef3fb;
+	border-color: #6d87b8;
+	color: #1f3f7a;
 }
 
 .pagecomments-thread-body {
@@ -105,8 +127,24 @@
 
 .pagecomments-thread-state {
 	text-transform: uppercase;
-	color: #58616d;
-	font-size: 11px;
+	color: #202122;
+	font-size: 12px;
+	padding: 1px 6px;
+	border-radius: 10px;
+	border: 1px solid transparent;
+	background: #f2f3f4;
+}
+
+.pagecomments-thread.is-open .pagecomments-thread-state {
+	background: #d9ebff;
+	border-color: #4a79be;
+	color: #1f3f7a;
+}
+
+.pagecomments-thread.is-resolved .pagecomments-thread-state {
+	background: #dcf6de;
+	border-color: #4c8f59;
+	color: #21592c;
 }
 
 .pagecomments-anchor-preview {
@@ -114,7 +152,7 @@
 	padding: 4px 8px;
 	border-left: 3px solid #c8ccd1;
 	color: #2a2a2a;
-	font-size: 12px;
+	font-size: 13px;
 	background: #fff;
 }
 
@@ -135,7 +173,7 @@
 .pagecomments-comment-meta {
 	display: flex;
 	gap: 8px;
-	font-size: 11px;
+	font-size: 12px;
 	color: #626d79;
 	margin-bottom: 3px;
 }
@@ -143,7 +181,7 @@
 .pagecomments-comment-body {
 	margin: 0;
 	white-space: pre-wrap;
-	font-size: 13px;
+	font-size: 14px;
 }
 
 .pagecomments-actions {
@@ -157,14 +195,26 @@
 	color: #fff;
 	border-radius: 4px;
 	padding: 4px 10px;
-	font-size: 12px;
+	font-size: 13px;
 	cursor: pointer;
+	transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.pagecomments-btn:hover {
+	background: #2a4b8d;
+	border-color: #2a4b8d;
 }
 
 .pagecomments-btn-quiet {
 	background: transparent;
 	color: #2a4b8d;
 	border-color: #a9b9d4;
+}
+
+.pagecomments-btn-quiet:hover {
+	background: #eef3fb;
+	border-color: #6d87b8;
+	color: #1f3f7a;
 }
 
 .pagecomments-textarea {
@@ -174,19 +224,19 @@
 	padding: 6px;
 	border: 1px solid #a2a9b1;
 	border-radius: 4px;
-	font-size: 13px;
+	font-size: 14px;
 	font-family: inherit;
 }
 
 .pagecomments-note,
 .pagecomments-loading,
 .pagecomments-empty {
-	font-size: 12px;
+	font-size: 13px;
 	color: #54595d;
 }
 
 .pagecomments-error {
-	font-size: 12px;
+	font-size: 13px;
 	color: #b32424;
 }
 
