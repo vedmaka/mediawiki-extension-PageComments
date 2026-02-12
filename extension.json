@@ -64,6 +64,7 @@
 				"pagecomments-ui-empty",
 				"pagecomments-ui-select-hint",
 				"pagecomments-ui-new-comment",
+				"pagecomments-ui-selected-text",
 				"pagecomments-ui-add-comment",
 				"pagecomments-ui-cancel",
 				"pagecomments-ui-submit",

@@ -25,6 +25,7 @@
 				<div v-else>
 					<div v-if="pendingAnchor && canWrite" class="pagecomments-composer">
 						<h3>{{ msg( 'pagecomments-ui-new-comment' ) }}</h3>
+						<p class="pagecomments-anchor-label">{{ msg( 'pagecomments-ui-selected-text' ) }}</p>
 						<blockquote class="pagecomments-anchor-preview">
 							{{ pendingAnchor.exact }}
 						</blockquote>
@@ -67,6 +68,7 @@
 							</button>
 						</div>
 						<div v-if="!isThreadCollapsed( thread.id )" class="pagecomments-thread-body">
+							<p class="pagecomments-anchor-label">{{ msg( 'pagecomments-ui-selected-text' ) }}</p>
 							<blockquote class="pagecomments-anchor-preview">
 								{{ thread.excerpt }}
 							</blockquote>

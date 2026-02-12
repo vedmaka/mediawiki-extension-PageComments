@@ -13,6 +13,7 @@
 	"pagecomments-ui-empty": "No comments yet.",
 	"pagecomments-ui-select-hint": "Select text in the article to add a comment.",
 	"pagecomments-ui-new-comment": "New comment",
+	"pagecomments-ui-selected-text": "Selected text",
 	"pagecomments-ui-add-comment": "Add comment",
 	"pagecomments-ui-cancel": "Cancel",
 	"pagecomments-ui-submit": "Submit",
