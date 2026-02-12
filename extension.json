@@ -1,0 +1,103 @@
+{
+	"name": "PageComments",
+	"version": "0.1.0",
+	"author": [
+		"Alexey"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:PageComments",
+	"descriptionmsg": "pagecomments-desc",
+	"license-name": "GPL-2.0-or-later",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.43.0",
+		"platform": {
+			"php": ">= 8.1"
+		}
+	},
+	"MessagesDirs": {
+		"PageComments": [
+			"i18n"
+		]
+	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\PageComments\\": "includes/"
+	},
+	"APIModules": {
+		"pagecomments": "MediaWiki\\Extension\\PageComments\\ApiPageComments"
+	},
+	"AvailableRights": [
+		"pagecomments-write",
+		"pagecomments-moderate"
+	],
+	"GroupPermissions": {
+		"user": {
+			"pagecomments-write": true
+		},
+		"sysop": {
+			"pagecomments-moderate": true
+		}
+	},
+	"ResourceModules": {
+		"ext.pagecomments.app": {
+			"class": "MediaWiki\\ResourceLoader\\CodexModule",
+			"packageFiles": [
+				"init.js",
+				"highlight.js",
+				"components/PageCommentsApp.vue"
+			],
+			"styles": [
+				"styles/pagecomments.css"
+			],
+			"dependencies": [
+				"vue",
+				"mediawiki.api",
+				"mediawiki.util"
+			],
+			"messages": [
+				"pagecomments-ui-title",
+				"pagecomments-ui-loading",
+				"pagecomments-ui-empty",
+				"pagecomments-ui-select-hint",
+				"pagecomments-ui-new-comment",
+				"pagecomments-ui-add-comment",
+				"pagecomments-ui-cancel",
+				"pagecomments-ui-submit",
+				"pagecomments-ui-reply",
+				"pagecomments-ui-resolve",
+				"pagecomments-ui-reopen",
+				"pagecomments-ui-write-required",
+				"pagecomments-ui-error-generic",
+				"pagecomments-ui-orphaned"
+			],
+			"targets": [
+				"desktop",
+				"mobile"
+			]
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "resources",
+		"remoteExtPath": "PageComments/resources"
+	},
+	"Hooks": {
+		"BeforePageDisplay": "MediaWiki\\Extension\\PageComments\\Hooks\\PageDisplayHooks::onBeforePageDisplay",
+		"LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\PageComments\\Hooks\\SchemaHooks::onLoadExtensionSchemaUpdates"
+	},
+	"config": {
+		"PageCommentsEnabledNamespaces": {
+			"value": [
+				0
+			],
+			"description": "Namespaces where page comments UI/API is enabled."
+		},
+		"PageCommentsMaxCommentLength": {
+			"value": 2000,
+			"description": "Maximum number of characters in a comment body."
+		},
+		"PageCommentsMaxAnchorLength": {
+			"value": 600,
+			"description": "Maximum number of characters in captured selection text."
+		}
+	},
+	"manifest_version": 2
+}

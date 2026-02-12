@@ -1,0 +1,12 @@
+{
+	"@metadata": {
+		"authors": [
+			"Alexey"
+		]
+	},
+	"pagecomments-desc": "Extension description shown on Special:Version.",
+	"right-pagecomments-write": "User right label: can write page comments.",
+	"right-pagecomments-moderate": "User right label: can moderate page comments.",
+	"pagecomments-ui-title": "Sidebar title for page comments panel.",
+	"pagecomments-ui-select-hint": "Hint in empty state: user should select article text to create a comment."
+}

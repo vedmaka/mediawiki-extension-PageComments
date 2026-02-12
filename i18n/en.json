@@ -1,0 +1,36 @@
+{
+	"@metadata": {
+		"authors": [
+			"Alexey"
+		]
+	},
+	"pagecomments-desc": "Adds Google-Doc-style inline page comments for main namespace pages.",
+	"right-pagecomments-write": "Create page comments and replies",
+	"right-pagecomments-moderate": "Moderate page comments",
+	"pagecomments-ui-title": "Comments",
+	"pagecomments-ui-loading": "Loading comments...",
+	"pagecomments-ui-empty": "No comments yet.",
+	"pagecomments-ui-select-hint": "Select text in the article to add a comment.",
+	"pagecomments-ui-new-comment": "New comment",
+	"pagecomments-ui-add-comment": "Add comment",
+	"pagecomments-ui-cancel": "Cancel",
+	"pagecomments-ui-submit": "Submit",
+	"pagecomments-ui-reply": "Reply",
+	"pagecomments-ui-resolve": "Resolve",
+	"pagecomments-ui-reopen": "Reopen",
+	"pagecomments-ui-write-required": "Log in to add comments.",
+	"pagecomments-ui-error-generic": "Could not complete request.",
+	"pagecomments-ui-orphaned": "Orphaned anchor",
+	"pagecomments-api-error-unknown-action": "Unknown pagecomments action.",
+	"pagecomments-api-error-missing-pageid": "Missing or invalid page id.",
+	"pagecomments-api-error-missing-threadid": "Missing or invalid thread id.",
+	"pagecomments-api-error-invalid-page": "Target page does not exist.",
+	"pagecomments-api-error-main-namespace-only": "Comments allowed only in main namespace.",
+	"pagecomments-api-error-invalid-anchor": "Invalid comment anchor payload.",
+	"pagecomments-api-error-anchor-too-long": "Selected text is too long.",
+	"pagecomments-api-error-empty-body": "Comment text cannot be empty.",
+	"pagecomments-api-error-body-too-long": "Comment text is too long.",
+	"pagecomments-api-error-thread-not-found": "Comment thread not found.",
+	"pagecomments-api-error-parent-comment-not-found": "Parent comment not found.",
+	"pagecomments-api-error-permission-denied": "You are not allowed to write page comments."
+}
