@@ -26,16 +26,35 @@
 	box-shadow: -3px 0 10px rgba( 0, 0, 0, 0.08 );
 	display: flex;
 	flex-direction: column;
+	transform: translateX(100%);
+	transition: transform 180ms ease;
+}
+
+.pagecomments-panel.is-open {
+	transform: translateX(0);
 }
 
 .pagecomments-panel-header {
 	padding: 10px 14px;
 	border-bottom: 1px solid #eaecf0;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .pagecomments-panel-header h2 {
 	margin: 0;
 	font-size: 16px;
+}
+
+.pagecomments-panel-close {
+	border: 1px solid #a2a9b1;
+	background: #fff;
+	color: #202122;
+	border-radius: 4px;
+	padding: 3px 8px;
+	font-size: 12px;
+	cursor: pointer;
 }
 
 .pagecomments-panel-body {
@@ -170,5 +189,10 @@
 		height: 45vh;
 		border-left: 0;
 		border-top: 1px solid #dadde3;
+		transform: translateY(100%);
+	}
+
+	.pagecomments-panel.is-open {
+		transform: translateY(0);
 	}
 }

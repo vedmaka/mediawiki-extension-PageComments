@@ -55,6 +55,7 @@
 			],
 			"messages": [
 				"pagecomments-ui-title",
+				"pagecomments-ui-close",
 				"pagecomments-ui-loading",
 				"pagecomments-ui-empty",
 				"pagecomments-ui-select-hint",

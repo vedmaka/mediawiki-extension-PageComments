@@ -9,9 +9,15 @@
 			{{ msg( 'pagecomments-ui-add-comment' ) }}
 		</button>
 
-		<aside class="pagecomments-panel">
+		<aside
+			class="pagecomments-panel"
+			:class="{ 'is-open': isPanelOpen }"
+		>
 			<header class="pagecomments-panel-header">
 				<h2>{{ msg( 'pagecomments-ui-title' ) }}</h2>
+				<button class="pagecomments-panel-close" @click="closePanel">
+					{{ msg( 'pagecomments-ui-close' ) }}
+				</button>
 			</header>
 
 			<section class="pagecomments-panel-body">
@@ -146,7 +152,8 @@ module.exports = exports = {
 			pendingAnchor: null,
 			newThreadBody: '',
 			replyOpen: {},
-			replyBody: {}
+			replyBody: {},
+			isPanelOpen: false
 		};
 	},
 	mounted() {
@@ -270,10 +277,14 @@ module.exports = exports = {
 			this.pendingAnchor = this.capturedAnchor;
 			this.newThreadBody = '';
 			this.showAnchorButton = false;
+			this.isPanelOpen = true;
 			const selection = window.getSelection();
 			if ( selection ) {
 				selection.removeAllRanges();
 			}
+		},
+		closePanel() {
+			this.isPanelOpen = false;
 		},
 		cancelNewThread() {
 			this.pendingAnchor = null;
@@ -365,6 +376,7 @@ module.exports = exports = {
 		},
 		selectThread( threadId ) {
 			this.selectedThreadId = threadId;
+			this.isPanelOpen = true;
 			highlight.updateSelectedHighlightClasses( this.selectedThreadId );
 			this.scrollToHighlight( threadId );
 		},

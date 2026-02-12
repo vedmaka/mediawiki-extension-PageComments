@@ -8,6 +8,7 @@
 	"right-pagecomments-write": "Create page comments and replies",
 	"right-pagecomments-moderate": "Moderate page comments",
 	"pagecomments-ui-title": "Comments",
+	"pagecomments-ui-close": "Close",
 	"pagecomments-ui-loading": "Loading comments...",
 	"pagecomments-ui-empty": "No comments yet.",
 	"pagecomments-ui-select-hint": "Select text in the article to add a comment.",
