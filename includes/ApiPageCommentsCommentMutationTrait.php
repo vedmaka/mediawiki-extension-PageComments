@@ -43,7 +43,6 @@ trait ApiPageCommentsCommentMutationTrait {
 			);
 		}
 		$threadId = (int)$row->pcc_thread_id;
-		$timestamp = $dbw->timestamp();
 		$dbw->startAtomic( __METHOD__ );
 		$dbw->update(
 			'pagecomments_comment',
@@ -54,12 +53,7 @@ trait ApiPageCommentsCommentMutationTrait {
 			],
 			__METHOD__
 		);
-		$dbw->update(
-			'pagecomments_thread',
-			[ 'pct_updated_at' => $timestamp ],
-			[ 'pct_id' => $threadId ],
-			__METHOD__
-		);
+		// Keep thread ordering stable: editing comment text should not bump thread recency.
 		$dbw->endAtomic( __METHOD__ );
 		$this->getResult()->addValue( null, 'pagecomments', [
 			'action' => self::ACTION_EDIT_COMMENT,

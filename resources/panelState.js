@@ -95,9 +95,8 @@ function updateCommentBody( threads, threadId, commentId, body ) {
 	if ( !comment ) {
 		return false;
 	}
+	// Text edit only; preserve current thread order in panel.
 	comment.body = body;
-	thread.updatedAt = getNowTimestamp();
-	moveThreadToTop( threads, threadId );
 	return true;
 }
 
