@@ -53,79 +53,88 @@
 					<p v-if="errorMessage" class="pagecomments-error">
 						{{ errorMessage }}
 					</p>
+					<p v-if="!threads.length" class="pagecomments-empty">
+						{{ msg( 'pagecomments-ui-empty' ) }}
+					</p>
+					<p v-if="!threads.length && canWrite" class="pagecomments-note">
+						{{ msg( 'pagecomments-ui-select-hint' ) }}
+					</p>
 
-				<p v-if="!threads.length" class="pagecomments-empty">
-					{{ msg( 'pagecomments-ui-empty' ) }}
-				</p>
-				<p v-if="!threads.length && canWrite" class="pagecomments-note">
-					{{ msg( 'pagecomments-ui-select-hint' ) }}
-				</p>
-
-					<div
-						v-for="thread in threads"
-						:key="thread.id"
-						class="pagecomments-thread"
-						:class="{ 'is-selected': selectedThreadId === thread.id }"
-						@click="selectThread( thread.id )"
-					>
-						<div class="pagecomments-thread-head">
-							<strong>{{ thread.actorName }}</strong>
-							<span class="pagecomments-thread-state">{{ thread.state }}</span>
-						</div>
-						<blockquote class="pagecomments-anchor-preview">
-							{{ thread.excerpt }}
-						</blockquote>
-						<p v-if="thread.orphaned" class="pagecomments-note">
-							{{ msg( 'pagecomments-ui-orphaned' ) }}
-						</p>
-						<ul class="pagecomments-comments">
-							<li v-for="comment in thread.comments" :key="comment.id">
-								<div class="pagecomments-comment-meta">
-									<strong>{{ comment.actorName }}</strong>
-									<span>{{ formatTimestamp( comment.createdAt ) }}</span>
+						<div
+							v-for="thread in threads"
+							:key="thread.id"
+							class="pagecomments-thread"
+							:class="{ 'is-selected': selectedThreadId === thread.id }"
+							@click="selectThread( thread.id )"
+						>
+							<div class="pagecomments-thread-head">
+								<div class="pagecomments-thread-head-main">
+									<strong>{{ thread.actorName }}</strong>
+									<span class="pagecomments-thread-state">{{ thread.state }}</span>
 								</div>
-								<p class="pagecomments-comment-body">{{ comment.body }}</p>
-							</li>
-						</ul>
-						<div class="pagecomments-actions">
-							<button
-								v-if="canWrite"
-								class="pagecomments-btn pagecomments-btn-quiet"
-								@click.stop="toggleReply( thread.id )"
-							>
-								{{ msg( 'pagecomments-ui-reply' ) }}
-							</button>
-							<button
-								v-if="canWrite && thread.state === 'open'"
-								class="pagecomments-btn pagecomments-btn-quiet"
-								@click.stop="setThreadState( thread.id, 'resolved' )"
-							>
-								{{ msg( 'pagecomments-ui-resolve' ) }}
-							</button>
-							<button
-								v-if="canWrite && thread.state === 'resolved'"
-								class="pagecomments-btn pagecomments-btn-quiet"
-								@click.stop="setThreadState( thread.id, 'open' )"
-							>
-								{{ msg( 'pagecomments-ui-reopen' ) }}
-							</button>
-						</div>
-						<div v-if="replyOpen[thread.id]" class="pagecomments-reply">
-							<textarea
-								v-model="replyBody[thread.id]"
-								class="pagecomments-textarea"
-								rows="2"
-							></textarea>
-							<div class="pagecomments-actions">
-								<button class="pagecomments-btn" @click.stop="submitReply( thread.id )">
-									{{ msg( 'pagecomments-ui-submit' ) }}
-								</button>
-								<button class="pagecomments-btn pagecomments-btn-quiet" @click.stop="toggleReply( thread.id )">
-									{{ msg( 'pagecomments-ui-cancel' ) }}
+								<button
+									class="pagecomments-thread-toggle"
+									@click.stop="toggleThreadCollapsed( thread.id )"
+								>
+									{{ isThreadCollapsed( thread.id ) ? msg( 'pagecomments-ui-show-thread' ) : msg( 'pagecomments-ui-hide-thread' ) }}
 								</button>
 							</div>
+							<div v-if="!isThreadCollapsed( thread.id )" class="pagecomments-thread-body">
+								<blockquote class="pagecomments-anchor-preview">
+									{{ thread.excerpt }}
+								</blockquote>
+								<p v-if="thread.orphaned" class="pagecomments-note">
+									{{ msg( 'pagecomments-ui-orphaned' ) }}
+								</p>
+								<ul class="pagecomments-comments">
+									<li v-for="comment in thread.comments" :key="comment.id">
+										<div class="pagecomments-comment-meta">
+											<strong>{{ comment.actorName }}</strong>
+											<span>{{ formatTimestamp( comment.createdAt ) }}</span>
+										</div>
+										<p class="pagecomments-comment-body">{{ comment.body }}</p>
+									</li>
+								</ul>
+								<div class="pagecomments-actions">
+									<button
+										v-if="canWrite"
+										class="pagecomments-btn pagecomments-btn-quiet"
+										@click.stop="toggleReply( thread.id )"
+									>
+										{{ msg( 'pagecomments-ui-reply' ) }}
+									</button>
+									<button
+										v-if="canWrite && thread.state === 'open'"
+										class="pagecomments-btn pagecomments-btn-quiet"
+										@click.stop="setThreadState( thread.id, 'resolved' )"
+									>
+										{{ msg( 'pagecomments-ui-resolve' ) }}
+									</button>
+									<button
+										v-if="canWrite && thread.state === 'resolved'"
+										class="pagecomments-btn pagecomments-btn-quiet"
+										@click.stop="setThreadState( thread.id, 'open' )"
+									>
+										{{ msg( 'pagecomments-ui-reopen' ) }}
+									</button>
+								</div>
+								<div v-if="replyOpen[thread.id]" class="pagecomments-reply">
+									<textarea
+										v-model="replyBody[thread.id]"
+										class="pagecomments-textarea"
+										rows="2"
+									></textarea>
+									<div class="pagecomments-actions">
+										<button class="pagecomments-btn" @click.stop="submitReply( thread.id )">
+											{{ msg( 'pagecomments-ui-submit' ) }}
+										</button>
+										<button class="pagecomments-btn pagecomments-btn-quiet" @click.stop="toggleReply( thread.id )">
+											{{ msg( 'pagecomments-ui-cancel' ) }}
+										</button>
+									</div>
+								</div>
+							</div>
 						</div>
-					</div>
 				</div>
 			</section>
 		</aside>
@@ -134,6 +143,8 @@
 
 <script>
 const highlight = require( '../highlight.js' );
+const panelState = require( '../panelState.js' );
+const anchorUtil = require( '../anchor.js' );
 
 module.exports = exports = {
 	name: 'PageCommentsApp',
@@ -153,7 +164,9 @@ module.exports = exports = {
 			newThreadBody: '',
 			replyOpen: {},
 			replyBody: {},
-			isPanelOpen: false
+			isPanelOpen: false,
+			syncTimer: null,
+			collapsedThreads: {}
 		};
 	},
 	mounted() {
@@ -166,6 +179,10 @@ module.exports = exports = {
 		document.removeEventListener( 'mouseup', this.onMouseUp, true );
 		window.removeEventListener( 'scroll', this.onScroll, true );
 		window.removeEventListener( 'resize', this.onScroll, true );
+		if ( this.syncTimer ) {
+			clearTimeout( this.syncTimer );
+			this.syncTimer = null;
+		}
 	},
 	methods: {
 		msg( key ) {
@@ -174,57 +191,34 @@ module.exports = exports = {
 		onScroll() {
 			this.showAnchorButton = false;
 		},
-		getArticleRoot() {
-			return document.querySelector( '.mw-parser-output' ) || document.querySelector( '#mw-content-text' );
-		},
-		isInArticle( node ) {
-			const root = this.getArticleRoot();
-			if ( !root || !node ) {
-				return false;
-			}
-			return root.contains( node );
-		},
-		getEventTargetElement( event ) {
-			const target = event.target;
-			if ( target instanceof Element ) {
-				return target;
-			}
-			if ( target && target.parentElement instanceof Element ) {
-				return target.parentElement;
-			}
-			return null;
-		},
 		onMouseUp( event ) {
 			if ( !this.canWrite ) {
 				return;
 			}
-			const targetElement = this.getEventTargetElement( event );
+			const targetElement = anchorUtil.getEventTargetElement( event );
 			if ( targetElement && targetElement.closest( '#pagecomments-root' ) ) {
 				return;
 			}
-
 			const selection = window.getSelection();
 			if ( !selection || selection.rangeCount === 0 || selection.isCollapsed ) {
 				this.showAnchorButton = false;
 				return;
 			}
-
 			const range = selection.getRangeAt( 0 );
+			const articleRoot = anchorUtil.getArticleRoot();
 			if (
-				!this.isInArticle( range.commonAncestorContainer ) ||
-				!this.isInArticle( range.startContainer ) ||
-				!this.isInArticle( range.endContainer )
+				!anchorUtil.isInArticle( range.commonAncestorContainer, articleRoot ) ||
+				!anchorUtil.isInArticle( range.startContainer, articleRoot ) ||
+				!anchorUtil.isInArticle( range.endContainer, articleRoot )
 			) {
 				this.showAnchorButton = false;
 				return;
 			}
-
-			const anchor = this.buildAnchorFromRange( range );
+			const anchor = anchorUtil.buildAnchorFromRange( range, articleRoot );
 			if ( !anchor || !anchor.exact ) {
 				this.showAnchorButton = false;
 				return;
 			}
-
 			const rect = range.getBoundingClientRect();
 			this.anchorButtonStyle = {
 				top: `${Math.max( rect.top - 36, 8 )}px`,
@@ -232,43 +226,6 @@ module.exports = exports = {
 			};
 			this.capturedAnchor = anchor;
 			this.showAnchorButton = true;
-		},
-		buildAnchorFromRange( range ) {
-			const root = this.getArticleRoot();
-			if ( !root ) {
-				return null;
-			}
-
-			const exact = range.toString().trim();
-			if ( !exact ) {
-				return null;
-			}
-
-			const offsets = this.getRangeOffsets( range, root );
-			if ( !offsets ) {
-				return null;
-			}
-
-			const allText = root.textContent || '';
-			return {
-				exact,
-				start: offsets.start,
-				end: offsets.end,
-				prefix: allText.slice( Math.max( 0, offsets.start - 24 ), offsets.start ),
-				suffix: allText.slice( offsets.end, offsets.end + 24 )
-			};
-		},
-		getRangeOffsets( range, root ) {
-			try {
-				const before = range.cloneRange();
-				before.selectNodeContents( root );
-				before.setEnd( range.startContainer, range.startOffset );
-				const start = before.toString().length;
-				const end = start + range.toString().length;
-				return { start, end };
-			} catch ( e ) {
-				return null;
-			}
 		},
 		openNewCommentComposer() {
 			if ( !this.capturedAnchor ) {
@@ -290,6 +247,42 @@ module.exports = exports = {
 			this.pendingAnchor = null;
 			this.newThreadBody = '';
 		},
+		scheduleBackgroundSync() {
+			if ( this.syncTimer ) {
+				clearTimeout( this.syncTimer );
+			}
+			this.syncTimer = setTimeout( () => {
+				this.syncTimer = null;
+				const api = new mw.Api();
+				api.get( {
+					action: 'pagecomments',
+					pcaction: 'list',
+					pageid: this.pageId,
+					format: 'json'
+				} ).then( ( data ) => {
+					this.threads = ( data.pagecomments && data.pagecomments.threads ) || [];
+					this.syncCollapsedThreads();
+					this.$nextTick( () => this.applyHighlights() );
+				} ).catch( () => {} );
+			}, 900 );
+		},
+		isThreadCollapsed( threadId ) {
+			return !!this.collapsedThreads[threadId];
+		},
+		toggleThreadCollapsed( threadId ) {
+			this.collapsedThreads[threadId] = !this.isThreadCollapsed( threadId );
+		},
+		syncCollapsedThreads() {
+			const next = {};
+			for ( const thread of this.threads ) {
+				if ( Object.prototype.hasOwnProperty.call( this.collapsedThreads, thread.id ) ) {
+					next[thread.id] = !!this.collapsedThreads[thread.id];
+					continue;
+				}
+				next[thread.id] = thread.state === 'resolved';
+			}
+			this.collapsedThreads = next;
+		},
 		async fetchThreads() {
 			this.loading = true;
 			this.errorMessage = '';
@@ -302,6 +295,7 @@ module.exports = exports = {
 					format: 'json'
 				} );
 				this.threads = ( data.pagecomments && data.pagecomments.threads ) || [];
+				this.syncCollapsedThreads();
 				this.$nextTick( () => this.applyHighlights() );
 			} catch ( e ) {
 				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
@@ -314,25 +308,50 @@ module.exports = exports = {
 				return;
 			}
 			this.errorMessage = '';
+			const pendingAnchor = this.pendingAnchor;
+			const body = this.newThreadBody.trim();
 			try {
 				const api = new mw.Api();
-				await api.postWithToken( 'csrf', {
+				const data = await api.postWithToken( 'csrf', {
 					action: 'pagecomments',
 					pcaction: 'create',
 					pageid: this.pageId,
-					anchor: JSON.stringify( this.pendingAnchor ),
-					body: this.newThreadBody,
+					anchor: JSON.stringify( pendingAnchor ),
+					body,
 					format: 'json'
 				} );
+				const payload = data && data.pagecomments ? data.pagecomments : {};
+				const threadId = Number( payload.threadId );
+				const commentId = Number( payload.commentId );
+				if ( !threadId || !commentId ) {
+					await this.fetchThreads();
+					return;
+				}
+
+				const newThread = panelState.buildThreadFromCreateResult( {
+					threadId,
+					commentId,
+					pageId: this.pageId,
+					revisionId: Number( mw.config.get( 'wgRevisionId' ) ) || 0,
+					pendingAnchor,
+					body
+				} );
+				this.threads.unshift( newThread );
+				this.collapsedThreads[threadId] = false;
+				this.selectedThreadId = threadId;
+				this.$nextTick( () => this.applyHighlights() );
+				this.scheduleBackgroundSync();
 				this.pendingAnchor = null;
 				this.newThreadBody = '';
-				await this.fetchThreads();
 			} catch ( e ) {
 				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
 			}
 		},
 		toggleReply( threadId ) {
 			this.replyOpen[threadId] = !this.replyOpen[threadId];
+			if ( this.replyOpen[threadId] ) {
+				this.collapsedThreads[threadId] = false;
+			}
 			if ( !this.replyOpen[threadId] ) {
 				this.replyBody[threadId] = '';
 			}
@@ -345,16 +364,24 @@ module.exports = exports = {
 			this.errorMessage = '';
 			try {
 				const api = new mw.Api();
-				await api.postWithToken( 'csrf', {
+				const data = await api.postWithToken( 'csrf', {
 					action: 'pagecomments',
 					pcaction: 'reply',
 					threadid: threadId,
 					body,
 					format: 'json'
 				} );
+				const payload = data && data.pagecomments ? data.pagecomments : {};
+				const commentId = Number( payload.commentId );
+				const updated = commentId &&
+					panelState.appendReply( this.threads, threadId, commentId, body.trim() );
+				if ( updated ) {
+					this.scheduleBackgroundSync();
+				} else {
+					await this.fetchThreads();
+				}
 				this.replyBody[threadId] = '';
 				this.replyOpen[threadId] = false;
-				await this.fetchThreads();
 			} catch ( e ) {
 				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
 			}
@@ -369,7 +396,13 @@ module.exports = exports = {
 					threadid: threadId,
 					format: 'json'
 				} );
-				await this.fetchThreads();
+				const updated = panelState.setThreadState( this.threads, threadId, state );
+				if ( updated ) {
+					this.collapsedThreads[threadId] = state === 'resolved';
+					this.scheduleBackgroundSync();
+				} else {
+					await this.fetchThreads();
+				}
 			} catch ( e ) {
 				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
 			}
@@ -377,6 +410,7 @@ module.exports = exports = {
 		selectThread( threadId ) {
 			this.selectedThreadId = threadId;
 			this.isPanelOpen = true;
+			this.collapsedThreads[threadId] = false;
 			highlight.updateSelectedHighlightClasses( this.selectedThreadId );
 			this.scrollToHighlight( threadId );
 		},
@@ -387,7 +421,7 @@ module.exports = exports = {
 			}
 		},
 		applyHighlights() {
-			const root = this.getArticleRoot();
+			const root = anchorUtil.getArticleRoot();
 			if ( !root ) {
 				return;
 			}
@@ -411,6 +445,7 @@ module.exports = exports = {
 				}
 				matches.push( {
 					threadId: thread.id,
+					state: thread.state || 'open',
 					start: offset,
 					end: offset + exact.length
 				} );

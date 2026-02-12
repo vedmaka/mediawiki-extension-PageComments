@@ -83,6 +83,26 @@
 	margin-bottom: 6px;
 }
 
+.pagecomments-thread-head-main {
+	display: flex;
+	gap: 8px;
+	align-items: baseline;
+}
+
+.pagecomments-thread-toggle {
+	border: 1px solid #a9b9d4;
+	background: transparent;
+	color: #2a4b8d;
+	border-radius: 4px;
+	padding: 2px 8px;
+	font-size: 11px;
+	cursor: pointer;
+}
+
+.pagecomments-thread-body {
+	margin-top: 6px;
+}
+
 .pagecomments-thread-state {
 	text-transform: uppercase;
 	color: #58616d;
@@ -171,9 +191,18 @@
 }
 
 .pagecomments-highlight {
-	background: #fff2a8;
-	outline: 1px solid #d9b300;
+	outline: 1px solid transparent;
 	cursor: pointer;
+}
+
+.pagecomments-highlight-open {
+	background: #d9ebff;
+	outline-color: #4a79be;
+}
+
+.pagecomments-highlight-resolved {
+	background: #dcf6de;
+	outline-color: #4c8f59;
 }
 
 .pagecomments-highlight-selected {

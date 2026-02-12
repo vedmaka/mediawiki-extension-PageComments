@@ -45,6 +45,7 @@ Action API: `action=pagecomments`
 
 ## Known limits
 
-- No realtime syncing; panel refreshes after each write.
+- No realtime syncing between users.
+- Panel uses optimistic updates with a short background re-sync.
 - Overlapping highlighted ranges are skipped to keep markup stable.
 - If page content changes, some threads can become orphaned.

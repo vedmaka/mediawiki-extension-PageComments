@@ -76,6 +76,7 @@ function applyMatchesToDom( map, matches, onThreadClick ) {
 			const list = segmentsByNode.get( entry.node ) || [];
 			list.push( {
 				threadId: match.threadId,
+				state: match.state || 'open',
 				start: localStart,
 				end: localEnd
 			} );
@@ -96,8 +97,12 @@ function applyMatchesToDom( map, matches, onThreadClick ) {
 				frag.appendChild( document.createTextNode( value.slice( cursor, segment.start ) ) );
 			}
 			const wrapper = document.createElement( 'span' );
-			wrapper.className = 'pagecomments-highlight';
+			const stateClass = segment.state === 'resolved' ?
+				'pagecomments-highlight-resolved' :
+				'pagecomments-highlight-open';
+			wrapper.className = `pagecomments-highlight ${stateClass}`;
 			wrapper.dataset.threadId = String( segment.threadId );
+			wrapper.dataset.state = segment.state;
 			wrapper.textContent = value.slice( segment.start, segment.end );
 			wrapper.addEventListener( 'click', ( event ) => {
 				event.preventDefault();

@@ -19,6 +19,8 @@
 	"pagecomments-ui-reply": "Reply",
 	"pagecomments-ui-resolve": "Resolve",
 	"pagecomments-ui-reopen": "Reopen",
+	"pagecomments-ui-show-thread": "Show thread",
+	"pagecomments-ui-hide-thread": "Hide thread",
 	"pagecomments-ui-write-required": "Log in to add comments.",
 	"pagecomments-ui-error-generic": "Could not complete request.",
 	"pagecomments-ui-orphaned": "Orphaned anchor",
