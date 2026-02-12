@@ -21,6 +21,20 @@ function moveThreadToTop( threads, threadId ) {
 	threads.unshift( thread );
 }
 
+function buildOptimisticComment( threadId, commentId, body, timestamp, actorName ) {
+	return {
+		id: commentId,
+		threadId,
+		parentCommentId: null,
+		body,
+		createdAt: timestamp,
+		actorName,
+		canManage: true,
+		canEdit: true,
+		canDelete: true
+	};
+}
+
 function buildThreadFromCreateResult( options ) {
 	const {
 		threadId,
@@ -30,7 +44,6 @@ function buildThreadFromCreateResult( options ) {
 		pendingAnchor,
 		body
 	} = options;
-
 	const timestamp = getNowTimestamp();
 	const actorName = getCurrentUserName();
 	return {
@@ -44,18 +57,8 @@ function buildThreadFromCreateResult( options ) {
 		anchor: pendingAnchor,
 		excerpt: pendingAnchor.exact,
 		orphaned: false,
-		comments: [
-				{
-					id: commentId,
-					threadId,
-					parentCommentId: null,
-					body,
-					createdAt: timestamp,
-					actorName,
-					canDelete: true
-				}
-			]
-		};
+		comments: [ buildOptimisticComment( threadId, commentId, body, timestamp, actorName ) ]
+	};
 }
 
 function appendReply( threads, threadId, commentId, body ) {
@@ -65,15 +68,7 @@ function appendReply( threads, threadId, commentId, body ) {
 	}
 	const timestamp = getNowTimestamp();
 	const actorName = getCurrentUserName();
-	threads[index].comments.push( {
-		id: commentId,
-		threadId,
-		parentCommentId: null,
-		body,
-		createdAt: timestamp,
-		actorName,
-		canDelete: true
-	} );
+	threads[index].comments.push( buildOptimisticComment( threadId, commentId, body, timestamp, actorName ) );
 	threads[index].updatedAt = timestamp;
 	moveThreadToTop( threads, threadId );
 	return true;
@@ -86,6 +81,22 @@ function setThreadState( threads, threadId, state ) {
 	}
 	threads[index].state = state;
 	threads[index].updatedAt = getNowTimestamp();
+	moveThreadToTop( threads, threadId );
+	return true;
+}
+
+function updateCommentBody( threads, threadId, commentId, body ) {
+	const index = findThreadIndex( threads, threadId );
+	if ( index < 0 ) {
+		return false;
+	}
+	const thread = threads[index];
+	const comment = thread.comments.find( ( item ) => item.id === commentId );
+	if ( !comment ) {
+		return false;
+	}
+	comment.body = body;
+	thread.updatedAt = getNowTimestamp();
 	moveThreadToTop( threads, threadId );
 	return true;
 }
@@ -114,5 +125,6 @@ module.exports = {
 	buildThreadFromCreateResult,
 	appendReply,
 	setThreadState,
+	updateCommentBody,
 	removeComment
 };

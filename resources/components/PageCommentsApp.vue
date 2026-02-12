@@ -8,140 +8,113 @@
 		>
 			{{ msg( 'pagecomments-ui-add-comment' ) }}
 		</button>
-		<aside
-			class="pagecomments-panel"
-			:class="{ 'is-open': isPanelOpen }"
-		>
+		<aside class="pagecomments-panel" :class="{ 'is-open': isPanelOpen }">
 			<header class="pagecomments-panel-header">
 				<h2>{{ msg( 'pagecomments-ui-title' ) }}</h2>
-					<button class="pagecomments-panel-close" @click="closePanel">
-						{{ msg( 'pagecomments-ui-close' ) }}
-					</button>
-				</header>
-				<section class="pagecomments-panel-body">
-					<p v-if="!canWrite" class="pagecomments-note">
-						{{ msg( 'pagecomments-ui-write-required' ) }}
-					</p>
-					<div v-if="loading" class="pagecomments-loading">
-						{{ msg( 'pagecomments-ui-loading' ) }}
-					</div>
-					<div v-else>
-						<div v-if="pendingAnchor && canWrite" class="pagecomments-composer">
-							<h3>{{ msg( 'pagecomments-ui-new-comment' ) }}</h3>
+				<button class="pagecomments-panel-close" @click="closePanel">
+					{{ msg( 'pagecomments-ui-close' ) }}
+				</button>
+			</header>
+			<section class="pagecomments-panel-body">
+				<p v-if="!canWrite" class="pagecomments-note">
+					{{ msg( 'pagecomments-ui-write-required' ) }}
+				</p>
+				<div v-if="loading" class="pagecomments-loading">
+					{{ msg( 'pagecomments-ui-loading' ) }}
+				</div>
+				<div v-else>
+					<div v-if="pendingAnchor && canWrite" class="pagecomments-composer">
+						<h3>{{ msg( 'pagecomments-ui-new-comment' ) }}</h3>
 						<blockquote class="pagecomments-anchor-preview">
 							{{ pendingAnchor.exact }}
 						</blockquote>
-						<textarea
-							v-model="newThreadBody"
-							class="pagecomments-textarea"
-							rows="3"
-						></textarea>
+							<textarea v-model="newThreadBody" class="pagecomments-textarea" rows="3"></textarea>
 						<div class="pagecomments-actions">
-							<button class="pagecomments-btn" @click="submitNewThread">
-								{{ msg( 'pagecomments-ui-submit' ) }}
-							</button>
-								<button class="pagecomments-btn pagecomments-btn-quiet" @click="cancelNewThread">
-									{{ msg( 'pagecomments-ui-cancel' ) }}
-								</button>
-							</div>
+								<button class="pagecomments-btn" @click="submitNewThread">{{ msg( 'pagecomments-ui-submit' ) }}</button>
+								<button class="pagecomments-btn pagecomments-btn-quiet" @click="cancelNewThread">{{ msg( 'pagecomments-ui-cancel' ) }}</button>
 						</div>
-						<p v-if="errorMessage" class="pagecomments-error">
-							{{ errorMessage }}
-						</p>
+					</div>
+					<p v-if="errorMessage" class="pagecomments-error">
+						{{ errorMessage }}
+					</p>
 					<p v-if="!threads.length" class="pagecomments-empty">
 						{{ msg( 'pagecomments-ui-empty' ) }}
 					</p>
-						<p v-if="!threads.length && canWrite" class="pagecomments-note">
-							{{ msg( 'pagecomments-ui-select-hint' ) }}
-						</p>
-							<div
-							v-for="thread in threads"
-							:key="thread.id"
-							class="pagecomments-thread"
-							:class="{
-								'is-selected': selectedThreadId === thread.id,
-								'is-open': thread.state === 'open',
-								'is-resolved': thread.state === 'resolved'
-							}"
-							@click="selectThread( thread.id )"
-						>
-							<div class="pagecomments-thread-head">
-								<div class="pagecomments-thread-head-main">
-									<strong>{{ thread.actorName }}</strong>
-									<span class="pagecomments-thread-state">{{ thread.state }}</span>
-								</div>
+					<p v-if="!threads.length && canWrite" class="pagecomments-note">
+						{{ msg( 'pagecomments-ui-select-hint' ) }}
+					</p>
+					<div
+						v-for="thread in threads"
+						:key="thread.id"
+						class="pagecomments-thread"
+						:class="{
+							'is-selected': selectedThreadId === thread.id,
+							'is-open': thread.state === 'open',
+							'is-resolved': thread.state === 'resolved'
+						}"
+						@click="selectThread( thread.id )"
+					>
+						<div class="pagecomments-thread-head">
+							<div class="pagecomments-thread-head-main">
+								<strong>{{ thread.actorName }}</strong>
+								<span class="pagecomments-thread-state">{{ thread.state }}</span>
+							</div>
+							<button
+								class="pagecomments-thread-toggle"
+								@click.stop="toggleThreadCollapsed( thread.id )"
+							>
+								{{ isThreadCollapsed( thread.id ) ? msg( 'pagecomments-ui-show-thread' ) : msg( 'pagecomments-ui-hide-thread' ) }}
+							</button>
+						</div>
+						<div v-if="!isThreadCollapsed( thread.id )" class="pagecomments-thread-body">
+							<blockquote class="pagecomments-anchor-preview">
+								{{ thread.excerpt }}
+							</blockquote>
+							<p v-if="thread.orphaned" class="pagecomments-note">
+								{{ msg( 'pagecomments-ui-orphaned' ) }}
+							</p>
+								<ul class="pagecomments-comments">
+									<page-comments-comment-item
+										v-for="comment in thread.comments"
+										:key="comment.id"
+										:thread-id="thread.id"
+										:comment="comment"
+										@edit-comment="saveEditedComment"
+										@delete-comment="deleteComment"
+									></page-comments-comment-item>
+								</ul>
+							<div class="pagecomments-actions">
 								<button
-									class="pagecomments-thread-toggle"
-									@click.stop="toggleThreadCollapsed( thread.id )"
+									v-if="canWrite"
+									class="pagecomments-btn pagecomments-btn-quiet"
+									@click.stop="toggleReply( thread.id )"
 								>
-									{{ isThreadCollapsed( thread.id ) ? msg( 'pagecomments-ui-show-thread' ) : msg( 'pagecomments-ui-hide-thread' ) }}
+									{{ msg( 'pagecomments-ui-reply' ) }}
+								</button>
+								<button
+									v-if="canWrite && thread.state === 'open'"
+									class="pagecomments-btn pagecomments-btn-quiet"
+									@click.stop="setThreadState( thread.id, 'resolved' )"
+								>
+									{{ msg( 'pagecomments-ui-resolve' ) }}
+								</button>
+								<button
+									v-if="canWrite && thread.state === 'resolved'"
+									class="pagecomments-btn pagecomments-btn-quiet"
+									@click.stop="setThreadState( thread.id, 'open' )"
+								>
+									{{ msg( 'pagecomments-ui-reopen' ) }}
 								</button>
 							</div>
-							<div v-if="!isThreadCollapsed( thread.id )" class="pagecomments-thread-body">
-								<blockquote class="pagecomments-anchor-preview">
-									{{ thread.excerpt }}
-								</blockquote>
-								<p v-if="thread.orphaned" class="pagecomments-note">
-									{{ msg( 'pagecomments-ui-orphaned' ) }}
-								</p>
-									<ul class="pagecomments-comments">
-										<li v-for="comment in thread.comments" :key="comment.id">
-											<div class="pagecomments-comment-meta">
-												<div class="pagecomments-comment-meta-main">
-													<strong>{{ comment.actorName }}</strong>
-													<span>{{ formatTimestamp( comment.createdAt ) }}</span>
-												</div>
-												<button
-													v-if="canDeleteComment( comment )"
-													class="pagecomments-btn pagecomments-btn-quiet pagecomments-btn-danger"
-													@click.stop="deleteComment( thread.id, comment.id )"
-												>
-													{{ msg( 'pagecomments-ui-delete' ) }}
-												</button>
-											</div>
-											<p class="pagecomments-comment-body">{{ comment.body }}</p>
-										</li>
-									</ul>
+							<div v-if="replyOpen[thread.id]" class="pagecomments-reply">
+									<textarea v-model="replyBody[thread.id]" class="pagecomments-textarea" rows="2"></textarea>
 								<div class="pagecomments-actions">
-									<button
-										v-if="canWrite"
-										class="pagecomments-btn pagecomments-btn-quiet"
-										@click.stop="toggleReply( thread.id )"
-									>
-										{{ msg( 'pagecomments-ui-reply' ) }}
-									</button>
-									<button
-										v-if="canWrite && thread.state === 'open'"
-										class="pagecomments-btn pagecomments-btn-quiet"
-										@click.stop="setThreadState( thread.id, 'resolved' )"
-									>
-										{{ msg( 'pagecomments-ui-resolve' ) }}
-									</button>
-									<button
-										v-if="canWrite && thread.state === 'resolved'"
-										class="pagecomments-btn pagecomments-btn-quiet"
-										@click.stop="setThreadState( thread.id, 'open' )"
-									>
-										{{ msg( 'pagecomments-ui-reopen' ) }}
-									</button>
-								</div>
-								<div v-if="replyOpen[thread.id]" class="pagecomments-reply">
-									<textarea
-										v-model="replyBody[thread.id]"
-										class="pagecomments-textarea"
-										rows="2"
-									></textarea>
-									<div class="pagecomments-actions">
-										<button class="pagecomments-btn" @click.stop="submitReply( thread.id )">
-											{{ msg( 'pagecomments-ui-submit' ) }}
-										</button>
-										<button class="pagecomments-btn pagecomments-btn-quiet" @click.stop="toggleReply( thread.id )">
-											{{ msg( 'pagecomments-ui-cancel' ) }}
-										</button>
-									</div>
+										<button class="pagecomments-btn" @click.stop="submitReply( thread.id )">{{ msg( 'pagecomments-ui-submit' ) }}</button>
+										<button class="pagecomments-btn pagecomments-btn-quiet" @click.stop="toggleReply( thread.id )">{{ msg( 'pagecomments-ui-cancel' ) }}</button>
 								</div>
 							</div>
 						</div>
+					</div>
 				</div>
 			</section>
 		</aside>
@@ -153,9 +126,14 @@ const highlight = require( '../highlight.js' );
 const panelState = require( '../panelState.js' );
 const anchorUtil = require( '../anchor.js' );
 const threadView = require( '../threadView.js' );
+const PageCommentsCommentItem = require( './PageCommentsCommentItem.vue' );
 
 module.exports = exports = {
 	name: 'PageCommentsApp',
+	components: {
+		PageCommentsCommentItem,
+		'page-comments-comment-item': PageCommentsCommentItem
+	},
 	data() {
 		const config = mw.config.get( 'wgPageComments' ) || {};
 		return {
@@ -354,7 +332,6 @@ module.exports = exports = {
 					await this.fetchThreads();
 					return;
 				}
-
 				const newThread = panelState.buildThreadFromCreateResult( {
 					threadId,
 					commentId,
@@ -383,7 +360,7 @@ module.exports = exports = {
 				this.replyBody[threadId] = '';
 			}
 		},
-			async submitReply( threadId ) {
+		async submitReply( threadId ) {
 			const body = this.replyBody[threadId] || '';
 			if ( !body.trim() ) {
 				return;
@@ -409,48 +386,75 @@ module.exports = exports = {
 				}
 				this.replyBody[threadId] = '';
 				this.replyOpen[threadId] = false;
-				} catch ( e ) {
-					this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
+			} catch ( e ) {
+				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
+			}
+		},
+		saveEditedComment( payload ) {
+			const threadId = Number( payload.threadId );
+			const commentId = Number( payload.commentId );
+			const body = String( payload.body || '' ).trim();
+			if ( !body ) {
+				return;
+			}
+			this.errorMessage = '';
+			const api = new mw.Api();
+			api.postWithToken( 'csrf', {
+				action: 'pagecomments',
+				pcaction: 'editcomment',
+				commentid: commentId,
+				body,
+				format: 'json'
+			} ).then( () => {
+				const updated = panelState.updateCommentBody( this.threads, threadId, commentId, body );
+				if ( !updated ) {
+					return this.fetchThreads();
 				}
-			},
-			canDeleteComment( comment ) {
-				if ( !comment || !Object.prototype.hasOwnProperty.call( comment, 'canDelete' ) ) {
-					return false;
+				if ( typeof payload.onDone === 'function' ) {
+					payload.onDone();
 				}
-				const value = comment.canDelete;
-				return value === '' || value === true || value === 1 || value === '1';
-			},
-			async deleteComment( threadId, commentId ) {
-				this.errorMessage = '';
-				try {
-					const api = new mw.Api();
-					const data = await api.postWithToken( 'csrf', {
-						action: 'pagecomments',
-						pcaction: 'deletecomment',
-						commentid: commentId,
-						format: 'json'
-					} );
-					const payload = data && data.pagecomments ? data.pagecomments : {};
-					const updated = panelState.removeComment( this.threads, threadId, commentId );
-					if ( updated.removed ) {
-						if ( updated.threadDeleted ) {
-							delete this.collapsedThreads[threadId];
-							delete this.replyOpen[threadId];
-							delete this.replyBody[threadId];
-							if ( this.selectedThreadId === threadId ) {
-								this.selectedThreadId = null;
-							}
+				this.scheduleBackgroundSync();
+				return null;
+			} ).catch( () => {
+				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
+			} );
+		},
+		deleteComment( payload ) {
+			const threadId = Number( payload.threadId );
+			const commentId = Number( payload.commentId );
+			this.errorMessage = '';
+			if ( typeof payload.onDone === 'function' ) {
+				payload.onDone();
+			}
+			const api = new mw.Api();
+			api.postWithToken( 'csrf', {
+				action: 'pagecomments',
+				pcaction: 'deletecomment',
+				commentid: commentId,
+				format: 'json'
+			} ).then( ( data ) => {
+				const resultPayload = data && data.pagecomments ? data.pagecomments : {};
+				const updated = panelState.removeComment( this.threads, threadId, commentId );
+				if ( updated.removed ) {
+					if ( updated.threadDeleted ) {
+						delete this.collapsedThreads[threadId];
+						delete this.replyOpen[threadId];
+						delete this.replyBody[threadId];
+						if ( this.selectedThreadId === threadId ) {
+							this.selectedThreadId = null;
 						}
-						this.$nextTick( () => this.applyHighlights() );
-						this.scheduleBackgroundSync();
-					} else if ( payload.threadId ) {
-						await this.fetchThreads();
 					}
-				} catch ( e ) {
-					this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
+					this.$nextTick( () => this.applyHighlights() );
+					this.scheduleBackgroundSync();
+				} else if ( resultPayload.threadId ) {
+					return this.fetchThreads();
 				}
-			},
-			async setThreadState( threadId, state ) {
+				return null;
+			} ).catch( () => {
+				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
+			} );
+		},
+		async setThreadState( threadId, state ) {
 			this.errorMessage = '';
 			try {
 				const api = new mw.Api();
@@ -484,16 +488,13 @@ module.exports = exports = {
 				marker.scrollIntoView( { behavior: 'smooth', block: 'center' } );
 			}
 		},
-			applyHighlights() {
-				threadView.applyHighlights(
-					this.threads,
-					this.selectedThreadId,
-					( threadId ) => this.selectThread( threadId )
-				);
-			},
-			formatTimestamp( mwTimestamp ) {
-				return threadView.formatTimestamp( mwTimestamp );
-			}
+		applyHighlights() {
+			threadView.applyHighlights(
+				this.threads,
+				this.selectedThreadId,
+				( threadId ) => this.selectThread( threadId )
+			);
 		}
-	};
+	}
+};
 </script>

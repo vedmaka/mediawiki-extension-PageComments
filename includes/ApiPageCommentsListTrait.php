@@ -82,6 +82,7 @@ trait ApiPageCommentsListTrait {
 				if ( !isset( $threads[$threadId] ) ) {
 					continue;
 				}
+				$canManage = $isModerator || ( $userActorId > 0 && $userActorId === (int)$row->pcc_actor_id );
 				$threads[$threadId]['comments'][] = [
 					'id' => (int)$row->pcc_id,
 					'threadId' => $threadId,
@@ -91,7 +92,9 @@ trait ApiPageCommentsListTrait {
 					'body' => (string)$row->pcc_body,
 					'createdAt' => (string)$row->pcc_created_at,
 					'actorName' => (string)$row->comment_actor_name,
-					'canDelete' => $isModerator || ( $userActorId > 0 && $userActorId === (int)$row->pcc_actor_id ),
+					'canManage' => $canManage,
+					'canEdit' => $canManage,
+					'canDelete' => $canManage,
 				];
 			}
 			foreach ( $threads as $threadId => $thread ) {

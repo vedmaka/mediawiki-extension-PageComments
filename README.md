@@ -41,6 +41,7 @@ Action API: `action=pagecomments`
 - `pcaction=list&pageid=<id>`
 - `pcaction=create&pageid=<id>&anchor=<json>&body=<text>&token=<csrf>`
 - `pcaction=reply&threadid=<id>&body=<text>&token=<csrf>`
+- `pcaction=editcomment&commentid=<id>&body=<text>&token=<csrf>`
 - `pcaction=deletecomment&commentid=<id>&token=<csrf>`
 - `pcaction=resolve&threadid=<id>&token=<csrf>`
 - `pcaction=reopen&threadid=<id>&token=<csrf>`

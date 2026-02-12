@@ -186,10 +186,79 @@
 	align-items: baseline;
 }
 
+.pagecomments-comment-controls {
+	position: relative;
+}
+
+.pagecomments-comment-menu-trigger {
+	border: 1px solid #a9b9d4;
+	background: transparent;
+	color: #2a4b8d;
+	border-radius: 4px;
+	padding: 0 7px;
+	height: 24px;
+	font-size: 16px;
+	line-height: 1;
+	cursor: pointer;
+	transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.pagecomments-comment-menu-trigger:hover {
+	background: #eef3fb;
+	border-color: #6d87b8;
+	color: #1f3f7a;
+}
+
+.pagecomments-comment-menu {
+	position: absolute;
+	top: 26px;
+	right: 0;
+	z-index: 2;
+	min-width: 120px;
+	padding: 4px;
+	background: #fff;
+	border: 1px solid #c8ccd1;
+	border-radius: 6px;
+	box-shadow: 0 4px 14px rgba( 0, 0, 0, 0.14 );
+}
+
+.pagecomments-comment-menu-item {
+	display: block;
+	width: 100%;
+	border: 1px solid transparent;
+	background: #fff;
+	color: #202122;
+	text-align: left;
+	border-radius: 4px;
+	padding: 4px 8px;
+	font-size: 13px;
+	cursor: pointer;
+	transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.pagecomments-comment-menu-item:hover {
+	background: #f8f9fa;
+	border-color: #c8ccd1;
+}
+
+.pagecomments-comment-menu-item.is-danger {
+	color: #a21a1a;
+}
+
+.pagecomments-comment-menu-item.is-danger:hover {
+	background: #fdecec;
+	border-color: #d8aaaa;
+	color: #7f1010;
+}
+
 .pagecomments-comment-body {
 	margin: 0;
 	white-space: pre-wrap;
 	font-size: 14px;
+}
+
+.pagecomments-comment-edit {
+	margin-top: 4px;
 }
 
 .pagecomments-actions {
@@ -223,17 +292,6 @@
 	background: #eef3fb;
 	border-color: #6d87b8;
 	color: #1f3f7a;
-}
-
-.pagecomments-btn-danger {
-	border-color: #d5a2a2;
-	color: #a21a1a;
-}
-
-.pagecomments-btn-danger:hover {
-	background: #fdecec;
-	border-color: #c56f6f;
-	color: #7f1010;
 }
 
 .pagecomments-textarea {
