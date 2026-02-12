@@ -55,9 +55,41 @@ function buildAnchorFromRange( range, root ) {
 	};
 }
 
+function isAnchorRangeValid( anchor ) {
+	if ( !anchor ) {
+		return false;
+	}
+	const start = Number( anchor.start );
+	const end = Number( anchor.end );
+	return Number.isInteger( start ) && Number.isInteger( end ) && start >= 0 && end > start;
+}
+
+function rangesOverlap( aStart, aEnd, bStart, bEnd ) {
+	return aStart < bEnd && bStart < aEnd;
+}
+
+function hasOverlappingAnchor( anchor, threads ) {
+	if ( !isAnchorRangeValid( anchor ) ) {
+		return false;
+	}
+	const start = Number( anchor.start );
+	const end = Number( anchor.end );
+	for ( const thread of threads || [] ) {
+		const existing = thread && thread.anchor ? thread.anchor : null;
+		if ( !isAnchorRangeValid( existing ) ) {
+			continue;
+		}
+		if ( rangesOverlap( start, end, Number( existing.start ), Number( existing.end ) ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
 module.exports = {
 	getArticleRoot,
 	isInArticle,
 	getEventTargetElement,
-	buildAnchorFromRange
+	buildAnchorFromRange,
+	hasOverlappingAnchor
 };

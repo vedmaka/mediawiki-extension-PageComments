@@ -3,7 +3,6 @@
 namespace MediaWiki\Extension\PageComments;
 
 use MediaWiki\Api\ApiBase;
-use MediaWiki\Api\ApiMain;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Title\Title;
 use Wikimedia\ParamValidator\ParamValidator;
@@ -15,10 +14,6 @@ class ApiPageComments extends ApiBase {
 	private const ACTION_REPLY = 'reply';
 	private const ACTION_RESOLVE = 'resolve';
 	private const ACTION_REOPEN = 'reopen';
-
-	public function __construct( ApiMain $main, $name ) {
-		parent::__construct( $main, $name );
-	}
 
 	/**
 	 * @inheritDoc
@@ -213,6 +208,7 @@ class ApiPageComments extends ApiBase {
 		$this->assertMainNamespace( $title );
 
 		$anchor = $this->normalizeAnchor( $anchorJson );
+		$this->assertNoAnchorOverlap( $pageId, $anchor );
 		$normalizedBody = $this->normalizeBody( $body );
 		$user = $this->getUser();
 		$actorId = $user->getActorId();
@@ -449,15 +445,50 @@ class ApiPageComments extends ApiBase {
 			$this->dieWithError( 'pagecomments-api-error-anchor-too-long', 'pagecomments-anchor-too-long' );
 		}
 
+		$start = isset( $anchor['start'] ) ? (int)$anchor['start'] : -1;
+		$end = isset( $anchor['end'] ) ? (int)$anchor['end'] : -1;
+		if ( $start < 0 || $end <= $start ) {
+			$this->dieWithError( 'pagecomments-api-error-invalid-anchor', 'pagecomments-invalid-anchor' );
+		}
+
 		$normalized = [
 			'exact' => $exact,
 			'prefix' => isset( $anchor['prefix'] ) ? (string)$anchor['prefix'] : '',
 			'suffix' => isset( $anchor['suffix'] ) ? (string)$anchor['suffix'] : '',
-			'start' => isset( $anchor['start'] ) ? max( 0, (int)$anchor['start'] ) : null,
-			'end' => isset( $anchor['end'] ) ? max( 0, (int)$anchor['end'] ) : null,
+			'start' => $start,
+			'end' => $end,
 		];
 
 		return $normalized;
+	}
+
+	private function assertNoAnchorOverlap( int $pageId, array $anchor ): void {
+		$start = (int)$anchor['start'];
+		$end = (int)$anchor['end'];
+		$dbw = MediaWikiServices::getInstance()->getConnectionProvider()->getPrimaryDatabase();
+		$rows = $dbw->newSelectQueryBuilder()
+			->select( [ 'pct_anchor_json' ] )
+			->from( 'pagecomments_thread' )
+			->where( [
+				'pct_page_id' => $pageId,
+				'pct_namespace' => NS_MAIN
+			] )
+			->caller( __METHOD__ )
+			->fetchResultSet();
+		foreach ( $rows as $row ) {
+			$existing = $this->decodeAnchor( (string)$row->pct_anchor_json );
+			if ( !$existing || !isset( $existing['start'] ) || !isset( $existing['end'] ) ) {
+				continue;
+			}
+			$existingStart = (int)$existing['start'];
+			$existingEnd = (int)$existing['end'];
+			if ( $existingStart < 0 || $existingEnd <= $existingStart ) {
+				continue;
+			}
+			if ( $start < $existingEnd && $existingStart < $end ) {
+				$this->dieWithError( 'pagecomments-api-error-anchor-overlap', 'pagecomments-anchor-overlap' );
+			}
+		}
 	}
 
 	private function decodeAnchor( string $anchorJson ): ?array {

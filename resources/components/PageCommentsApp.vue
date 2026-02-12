@@ -8,30 +8,26 @@
 		>
 			{{ msg( 'pagecomments-ui-add-comment' ) }}
 		</button>
-
 		<aside
 			class="pagecomments-panel"
 			:class="{ 'is-open': isPanelOpen }"
 		>
 			<header class="pagecomments-panel-header">
 				<h2>{{ msg( 'pagecomments-ui-title' ) }}</h2>
-				<button class="pagecomments-panel-close" @click="closePanel">
-					{{ msg( 'pagecomments-ui-close' ) }}
-				</button>
-			</header>
-
-			<section class="pagecomments-panel-body">
-				<p v-if="!canWrite" class="pagecomments-note">
-					{{ msg( 'pagecomments-ui-write-required' ) }}
-				</p>
-
-				<div v-if="loading" class="pagecomments-loading">
-					{{ msg( 'pagecomments-ui-loading' ) }}
-				</div>
-
-				<div v-else>
-					<div v-if="pendingAnchor && canWrite" class="pagecomments-composer">
-						<h3>{{ msg( 'pagecomments-ui-new-comment' ) }}</h3>
+					<button class="pagecomments-panel-close" @click="closePanel">
+						{{ msg( 'pagecomments-ui-close' ) }}
+					</button>
+				</header>
+				<section class="pagecomments-panel-body">
+					<p v-if="!canWrite" class="pagecomments-note">
+						{{ msg( 'pagecomments-ui-write-required' ) }}
+					</p>
+					<div v-if="loading" class="pagecomments-loading">
+						{{ msg( 'pagecomments-ui-loading' ) }}
+					</div>
+					<div v-else>
+						<div v-if="pendingAnchor && canWrite" class="pagecomments-composer">
+							<h3>{{ msg( 'pagecomments-ui-new-comment' ) }}</h3>
 						<blockquote class="pagecomments-anchor-preview">
 							{{ pendingAnchor.exact }}
 						</blockquote>
@@ -44,23 +40,21 @@
 							<button class="pagecomments-btn" @click="submitNewThread">
 								{{ msg( 'pagecomments-ui-submit' ) }}
 							</button>
-							<button class="pagecomments-btn pagecomments-btn-quiet" @click="cancelNewThread">
-								{{ msg( 'pagecomments-ui-cancel' ) }}
-							</button>
+								<button class="pagecomments-btn pagecomments-btn-quiet" @click="cancelNewThread">
+									{{ msg( 'pagecomments-ui-cancel' ) }}
+								</button>
+							</div>
 						</div>
-					</div>
-
-					<p v-if="errorMessage" class="pagecomments-error">
-						{{ errorMessage }}
-					</p>
+						<p v-if="errorMessage" class="pagecomments-error">
+							{{ errorMessage }}
+						</p>
 					<p v-if="!threads.length" class="pagecomments-empty">
 						{{ msg( 'pagecomments-ui-empty' ) }}
 					</p>
-					<p v-if="!threads.length && canWrite" class="pagecomments-note">
-						{{ msg( 'pagecomments-ui-select-hint' ) }}
-					</p>
-
-						<div
+						<p v-if="!threads.length && canWrite" class="pagecomments-note">
+							{{ msg( 'pagecomments-ui-select-hint' ) }}
+						</p>
+							<div
 							v-for="thread in threads"
 							:key="thread.id"
 							class="pagecomments-thread"
@@ -223,6 +217,11 @@ module.exports = exports = {
 				this.showAnchorButton = false;
 				return;
 			}
+			if ( anchorUtil.hasOverlappingAnchor( anchor, this.threads ) ) {
+				this.showAnchorButton = false;
+				this.errorMessage = this.msg( 'pagecomments-ui-overlap-selection' );
+				return;
+			}
 			const rect = range.getBoundingClientRect();
 			const buttonWidth = 120;
 			const buttonHeight = 32;
@@ -317,6 +316,12 @@ module.exports = exports = {
 		},
 		async submitNewThread() {
 			if ( !this.pendingAnchor || !this.newThreadBody.trim() ) {
+				return;
+			}
+			if ( anchorUtil.hasOverlappingAnchor( this.pendingAnchor, this.threads ) ) {
+				this.errorMessage = this.msg( 'pagecomments-ui-overlap-selection' );
+				this.pendingAnchor = null;
+				this.newThreadBody = '';
 				return;
 			}
 			this.errorMessage = '';

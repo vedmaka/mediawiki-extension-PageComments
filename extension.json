@@ -70,6 +70,7 @@
 				"pagecomments-ui-reopen",
 				"pagecomments-ui-show-thread",
 				"pagecomments-ui-hide-thread",
+				"pagecomments-ui-overlap-selection",
 				"pagecomments-ui-write-required",
 				"pagecomments-ui-error-generic",
 				"pagecomments-ui-orphaned"
