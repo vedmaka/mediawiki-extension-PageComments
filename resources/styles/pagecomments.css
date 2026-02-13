@@ -463,6 +463,18 @@
 	margin: 0;
 }
 
+.pagecomments-note-orphaned {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 6px;
+	border: 1px solid #d8b26f;
+	background: #fff4dd;
+	color: #6b4b16;
+	font-size: 12px;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
 .pagecomments-error {
 	font-size: 13px;
 	color: #b32424;
