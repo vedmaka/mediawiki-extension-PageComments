@@ -57,7 +57,6 @@
 					>
 						<div class="pagecomments-thread-head">
 							<div class="pagecomments-thread-head-main">
-								<strong>{{ thread.actorName }}</strong>
 								<button
 									v-if="canWrite"
 									class="pagecomments-thread-state-toggle"
