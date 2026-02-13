@@ -56,6 +56,6 @@ Action API: `action=pagecomments`
 
 - No realtime syncing between users.
 - Panel is state-first: comment/reply/edit/delete/resolve actions mutate local state without full-list refresh.
-- Background polling refreshes the list only when a new thread appears.
+- Background polling reconciles panel state when remote thread/comment data changes.
 - Overlapping highlighted ranges are skipped to keep markup stable.
 - If page content changes, some threads can become orphaned (displayed at the Comments panel as orphaned).

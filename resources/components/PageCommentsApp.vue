@@ -178,8 +178,8 @@ module.exports = exports = {
 			replyOpen: {},
 			replyBody: {},
 			isPanelOpen: false,
-			newThreadPollTimer: null,
-			newThreadPollInFlight: false,
+			remoteSyncPollTimer: null,
+			remoteSyncPollInFlight: false,
 			collapsedThreads: {},
 			lastHighlightSignature: '',
 			seenThreadComments: {},
@@ -196,7 +196,7 @@ module.exports = exports = {
 	mounted() {
 		this.loadSeenThreads();
 		this.fetchThreads();
-		this.startNewThreadPolling();
+		this.startRemoteSyncPolling();
 		document.addEventListener( 'mouseup', this.onMouseUp, true );
 		window.addEventListener( 'scroll', this.onScroll, true );
 		window.addEventListener( 'resize', this.onScroll, true );
@@ -205,7 +205,7 @@ module.exports = exports = {
 		document.removeEventListener( 'mouseup', this.onMouseUp, true );
 		window.removeEventListener( 'scroll', this.onScroll, true );
 		window.removeEventListener( 'resize', this.onScroll, true );
-		this.stopNewThreadPolling();
+		this.stopRemoteSyncPolling();
 		if ( this.hidePreviewTimer ) {
 			clearTimeout( this.hidePreviewTimer );
 			this.hidePreviewTimer = null;
@@ -475,59 +475,82 @@ module.exports = exports = {
 				left: `${left}px`
 			};
 		},
-		startNewThreadPolling() {
-			this.stopNewThreadPolling();
+		startRemoteSyncPolling() {
+			this.stopRemoteSyncPolling();
 			if ( !this.pageId ) {
 				return;
 			}
-			// Keep local state stable; pull full list only when a new thread appears.
-			this.newThreadPollTimer = setInterval( () => {
-				this.refreshThreadsIfNewThreadAdded();
+			// Poll remote state; reconcile only if thread/comment payload actually changed.
+			this.remoteSyncPollTimer = setInterval( () => {
+				this.refreshThreadsIfRemoteChanged();
 			}, 15000 );
 		},
-		stopNewThreadPolling() {
-			if ( !this.newThreadPollTimer ) {
+		stopRemoteSyncPolling() {
+			if ( !this.remoteSyncPollTimer ) {
 				return;
 			}
-			clearInterval( this.newThreadPollTimer );
-			this.newThreadPollTimer = null;
+			clearInterval( this.remoteSyncPollTimer );
+			this.remoteSyncPollTimer = null;
 		},
-		hasNewThread( nextThreads ) {
-			if ( !Array.isArray( nextThreads ) || !nextThreads.length ) {
-				return false;
+		buildThreadSyncSignature( thread ) {
+			if ( !thread ) {
+				return '';
 			}
-			const currentThreadIds = new Set(
-				this.threads.map( ( thread ) => Number( thread.id ) )
-			);
-			for ( const thread of nextThreads ) {
-				const threadId = Number( thread.id );
-				if (
-					Number.isInteger( threadId ) &&
-					threadId > 0 &&
-					!currentThreadIds.has( threadId )
-				) {
-					return true;
-				}
-			}
-			return false;
+			const comments = Array.isArray( thread.comments ) ? thread.comments : [];
+			const commentSignature = comments.map( ( comment ) => [
+				Number( comment.id ) || 0,
+				String( comment.createdAt || '' ),
+				String( comment.body || '' )
+			].join( ':' ) ).join( ';' );
+			return [
+				Number( thread.id ) || 0,
+				String( thread.state || '' ),
+				String( thread.updatedAt || '' ),
+				commentSignature
+			].join( '|' );
 		},
-		async refreshThreadsIfNewThreadAdded() {
-			if ( this.newThreadPollInFlight || !this.pageId ) {
+		buildThreadsSyncSignature( threads ) {
+			if ( !Array.isArray( threads ) || !threads.length ) {
+				return '';
+			}
+			return threads.map( ( thread ) => this.buildThreadSyncSignature( thread ) ).join( '||' );
+		},
+		hasRemoteChanges( nextThreads ) {
+			const currentSignature = this.buildThreadsSyncSignature( this.threads );
+			const nextSignature = this.buildThreadsSyncSignature( nextThreads );
+			return currentSignature !== nextSignature;
+		},
+		reconcileThreadsFromRemote( nextThreads ) {
+			this.threads = Array.isArray( nextThreads ) ? nextThreads : [];
+			this.syncCollapsedThreads();
+			if (
+				this.selectedThreadId !== null &&
+				!this.threads.some(
+					( thread ) => Number( thread.id ) === Number( this.selectedThreadId )
+				)
+			) {
+				this.selectedThreadId = null;
+			}
+			if ( this.selectedThreadId !== null ) {
+				this.markThreadSeen( this.selectedThreadId );
+			}
+			this.$nextTick( () => this.applyHighlights() );
+		},
+		async refreshThreadsIfRemoteChanged() {
+			if ( this.remoteSyncPollInFlight || !this.pageId ) {
 				return;
 			}
-			this.newThreadPollInFlight = true;
+			this.remoteSyncPollInFlight = true;
 			try {
 				const nextThreads = await this.fetchThreadsFromApi();
-				if ( !this.hasNewThread( nextThreads ) ) {
+				if ( !this.hasRemoteChanges( nextThreads ) ) {
 					return;
 				}
-				this.threads = nextThreads;
-				this.syncCollapsedThreads();
-				this.$nextTick( () => this.applyHighlights() );
+				this.reconcileThreadsFromRemote( nextThreads );
 			} catch ( e ) {
 				// Ignore polling errors; user actions continue to use local state.
 			} finally {
-				this.newThreadPollInFlight = false;
+				this.remoteSyncPollInFlight = false;
 			}
 		},
 		async fetchThreadsFromApi() {
@@ -563,9 +586,8 @@ module.exports = exports = {
 			}
 			this.errorMessage = '';
 			try {
-				this.threads = await this.fetchThreadsFromApi();
-				this.syncCollapsedThreads();
-				this.$nextTick( () => this.applyHighlights() );
+				const nextThreads = await this.fetchThreadsFromApi();
+				this.reconcileThreadsFromRemote( nextThreads );
 			} catch ( e ) {
 				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
 			} finally {
