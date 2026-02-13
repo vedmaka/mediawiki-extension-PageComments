@@ -17,6 +17,7 @@
 	"apihelp-pagecomments-param-commentid": "Target comment ID.",
 	"apihelp-pagecomments-param-anchor": "Anchor payload JSON for create action.",
 	"apihelp-pagecomments-param-body": "Comment body text.",
+	"apihelp-pagecomments-param-token": "CSRF token for write actions.",
 	"pagecomments-ui-title": "Comments",
 	"pagecomments-ui-close": "Close",
 	"pagecomments-ui-loading": "Loading comments...",
