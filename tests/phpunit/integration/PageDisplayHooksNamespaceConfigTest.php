@@ -24,7 +24,7 @@ class PageDisplayHooksNamespaceConfigTest extends MediaWikiIntegrationTestCase {
 	 */
 	public function testLoadsModuleInEnabledNamespace(): void {
 		$title = $this->createExistingTitleInNamespace( NS_PROJECT );
-		$out = $this->newOutputPageForTitle( $title );
+		$out = $this->newOutputPageForTitle( $title, 'view' );
 		$skin = $this->createMock( Skin::class );
 
 		PageDisplayHooks::onBeforePageDisplay( $out, $skin );
@@ -40,7 +40,21 @@ class PageDisplayHooksNamespaceConfigTest extends MediaWikiIntegrationTestCase {
 	 */
 	public function testSkipsModuleInDisabledNamespace(): void {
 		$title = $this->createExistingTitleInNamespace( NS_MAIN );
-		$out = $this->newOutputPageForTitle( $title );
+		$out = $this->newOutputPageForTitle( $title, 'view' );
+		$skin = $this->createMock( Skin::class );
+
+		PageDisplayHooks::onBeforePageDisplay( $out, $skin );
+
+		$this->assertNotContains( 'ext.pagecomments.app', $out->getModules() );
+		$this->assertArrayNotHasKey( 'wgPageComments', $out->getJsConfigVars() );
+	}
+
+	/**
+	 * BeforePageDisplay does not inject module/config when action is not view.
+	 */
+	public function testSkipsModuleForNonViewAction(): void {
+		$title = $this->createExistingTitleInNamespace( NS_PROJECT );
+		$out = $this->newOutputPageForTitle( $title, 'edit' );
 		$skin = $this->createMock( Skin::class );
 
 		PageDisplayHooks::onBeforePageDisplay( $out, $skin );
@@ -58,9 +72,9 @@ class PageDisplayHooksNamespaceConfigTest extends MediaWikiIntegrationTestCase {
 		return $page->getTitle();
 	}
 
-	private function newOutputPageForTitle( Title $title ): OutputPage {
+	private function newOutputPageForTitle( Title $title, string $action ): OutputPage {
 		$context = RequestContext::getMain();
-		$context->setRequest( new FauxRequest( [ 'action' => 'view' ] ) );
+		$context->setRequest( new FauxRequest( [ 'action' => $action ] ) );
 		$out = new OutputPage( $context );
 		$out->setTitle( $title );
 		return $out;

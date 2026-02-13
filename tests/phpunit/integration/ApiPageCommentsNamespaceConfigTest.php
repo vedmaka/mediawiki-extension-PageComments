@@ -78,6 +78,21 @@ class ApiPageCommentsNamespaceConfigTest extends ApiTestCase {
 	}
 
 	/**
+	 * List operation fails with namespace error when the page namespace is disabled.
+	 */
+	public function testListRejectedInDisabledNamespace(): void {
+		$pageId = $this->getPageIdInNamespace( NS_MAIN );
+		$author = $this->getTestUser()->getAuthority();
+
+		$this->expectApiErrorCode( 'pagecomments-main-namespace-only' );
+		$this->doApiRequest( [
+			'action' => 'pagecomments',
+			'pcaction' => 'list',
+			'pageid' => $pageId,
+		], null, false, $author );
+	}
+
+	/**
 	 * Reply/edit/resolve/delete mutations work end-to-end in an enabled namespace.
 	 */
 	public function testMutationsWorkInEnabledNamespace(): void {
@@ -136,6 +151,48 @@ class ApiPageCommentsNamespaceConfigTest extends ApiTestCase {
 		$this->assertCount( 1, $threads );
 		$this->assertSame( 'resolved', $threads[0]['state'] );
 		$this->assertCount( 1, $threads[0]['comments'] );
+	}
+
+	/**
+	 * Reopen mutation switches a resolved thread back to open in an enabled namespace.
+	 */
+	public function testReopenWorksInEnabledNamespace(): void {
+		$pageId = $this->getPageIdInNamespace( NS_PROJECT );
+		$author = $this->getTestUser()->getAuthority();
+
+		[ $createResult ] = $this->doApiRequestWithToken( [
+			'action' => 'pagecomments',
+			'pcaction' => 'create',
+			'pageid' => $pageId,
+			'anchor' => $this->buildAnchorJson(),
+			'body' => 'Root comment',
+		], null, $author, 'csrf' );
+		$threadId = (int)$createResult['pagecomments']['threadId'];
+
+		[ $resolveResult ] = $this->doApiRequestWithToken( [
+			'action' => 'pagecomments',
+			'pcaction' => 'resolve',
+			'threadid' => $threadId,
+		], null, $author, 'csrf' );
+		$this->assertSame( 'resolved', $resolveResult['pagecomments']['state'] );
+
+		[ $reopenResult ] = $this->doApiRequestWithToken( [
+			'action' => 'pagecomments',
+			'pcaction' => 'reopen',
+			'threadid' => $threadId,
+		], null, $author, 'csrf' );
+		$this->assertSame( 'reopen', $reopenResult['pagecomments']['action'] );
+		$this->assertSame( 'open', $reopenResult['pagecomments']['state'] );
+
+		[ $listResult ] = $this->doApiRequest( [
+			'action' => 'pagecomments',
+			'pcaction' => 'list',
+			'pageid' => $pageId,
+		], null, false, $author );
+		$threads = $listResult['pagecomments']['threads'];
+		$this->assertCount( 1, $threads );
+		$this->assertSame( $threadId, (int)$threads[0]['id'] );
+		$this->assertSame( 'open', $threads[0]['state'] );
 	}
 
 	private function getPageIdInNamespace( int $namespace ): int {
