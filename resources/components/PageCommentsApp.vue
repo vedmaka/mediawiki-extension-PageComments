@@ -219,7 +219,7 @@ module.exports = exports = {
 				this.showAnchorButton = false;
 				return;
 			}
-			if ( anchorUtil.hasOverlappingAnchor( anchor, this.threads ) ) {
+			if ( anchorUtil.hasOverlappingAnchor( anchor, this.threads, articleRoot ) ) {
 				this.showAnchorButton = false;
 				this.errorMessage = this.msg( 'pagecomments-ui-overlap-selection' );
 				return;
@@ -350,7 +350,8 @@ module.exports = exports = {
 			if ( !this.pendingAnchor || !this.newThreadBody.trim() ) {
 				return;
 			}
-			if ( anchorUtil.hasOverlappingAnchor( this.pendingAnchor, this.threads ) ) {
+			const articleRoot = anchorUtil.getArticleRoot();
+			if ( anchorUtil.hasOverlappingAnchor( this.pendingAnchor, this.threads, articleRoot ) ) {
 				this.errorMessage = this.msg( 'pagecomments-ui-overlap-selection' );
 				this.pendingAnchor = null;
 				this.newThreadBody = '';
