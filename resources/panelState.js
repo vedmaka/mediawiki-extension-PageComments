@@ -79,9 +79,8 @@ function setThreadState( threads, threadId, state ) {
 	if ( index < 0 ) {
 		return false;
 	}
+	// Keep position stable: status changes should not reorder thread list.
 	threads[index].state = state;
-	threads[index].updatedAt = getNowTimestamp();
-	moveThreadToTop( threads, threadId );
 	return true;
 }
 

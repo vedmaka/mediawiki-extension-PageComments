@@ -284,12 +284,10 @@ class ApiPageComments extends ApiBase {
 			$this->dieWithError( 'pagecomments-api-error-thread-not-found', 'pagecomments-thread-not-found' );
 		}
 
+		// Preserve list ordering: resolving/reopening should not bump thread recency.
 		$dbw->update(
 			'pagecomments_thread',
-			[
-				'pct_state' => $state,
-				'pct_updated_at' => $dbw->timestamp()
-			],
+			[ 'pct_state' => $state ],
 			[ 'pct_id' => $threadId ],
 			__METHOD__
 		);
