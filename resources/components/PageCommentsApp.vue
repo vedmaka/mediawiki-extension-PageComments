@@ -340,6 +340,27 @@ module.exports = exports = {
 		commentCountLabel( count ) {
 			return mw.message( 'pagecomments-ui-comment-count', Number( count ) || 0 ).text();
 		},
+		getSelectionEndpointRect( range ) {
+			if ( !range ) {
+				return null;
+			}
+			// Prefer the last client rect so multiline selections anchor near their end.
+			const rects = range.getClientRects();
+			for ( let i = rects.length - 1; i >= 0; i-- ) {
+				const rect = rects[i];
+				if ( rect && ( rect.width > 0 || rect.height > 0 ) ) {
+					return rect;
+				}
+			}
+			const endRange = range.cloneRange();
+			endRange.collapse( false );
+			const endRect = endRange.getBoundingClientRect();
+			if ( endRect && ( endRect.width > 0 || endRect.height > 0 ) ) {
+				return endRect;
+			}
+			const fullRect = range.getBoundingClientRect();
+			return fullRect && ( fullRect.width > 0 || fullRect.height > 0 ) ? fullRect : null;
+		},
 		onScroll() {
 			this.showAnchorButton = false;
 			this.hideThreadPreview();
@@ -381,10 +402,17 @@ module.exports = exports = {
 				this.errorMessage = this.msg( 'pagecomments-ui-overlap-selection' );
 				return;
 			}
-			const rect = range.getBoundingClientRect();
+			const rect = this.getSelectionEndpointRect( range );
+			if ( !rect ) {
+				this.showAnchorButton = false;
+				return;
+			}
 			const buttonWidth = 120;
 			const buttonHeight = 32;
-			let left = rect.right - buttonWidth;
+			let left = rect.right + 6;
+			if ( left + buttonWidth > window.innerWidth - 8 ) {
+				left = rect.right - buttonWidth;
+			}
 			left = Math.min( Math.max( 8, left ), window.innerWidth - buttonWidth - 8 );
 			let top = rect.bottom + 6;
 			if ( top + buttonHeight > window.innerHeight - 8 ) {
