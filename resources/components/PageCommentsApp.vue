@@ -73,12 +73,14 @@
 							</div>
 							<button
 								class="pagecomments-thread-toggle"
+								:title="isThreadCollapsed( thread.id ) ? msg( 'pagecomments-ui-show-thread' ) : msg( 'pagecomments-ui-hide-thread' )"
+								:aria-label="isThreadCollapsed( thread.id ) ? msg( 'pagecomments-ui-show-thread' ) : msg( 'pagecomments-ui-hide-thread' )"
 								@click.stop="toggleThreadCollapsed( thread.id )"
 							>
-								{{ isThreadCollapsed( thread.id ) ? msg( 'pagecomments-ui-show-thread' ) : msg( 'pagecomments-ui-hide-thread' ) }}
+								{{ isThreadCollapsed( thread.id ) ? '▸' : '▾' }}
 							</button>
 						</div>
-						<div v-if="!isThreadCollapsed( thread.id )" class="pagecomments-thread-body">
+						<div class="pagecomments-thread-body">
 							<p class="pagecomments-anchor-label">{{ msg( 'pagecomments-ui-selected-text' ) }}</p>
 							<blockquote class="pagecomments-anchor-preview">
 								{{ thread.excerpt }}
@@ -86,6 +88,7 @@
 							<p v-if="thread.orphaned" class="pagecomments-note">
 								{{ msg( 'pagecomments-ui-orphaned' ) }}
 							</p>
+							<template v-if="!isThreadCollapsed( thread.id )">
 								<ul class="pagecomments-comments">
 									<page-comments-comment-item
 										v-for="comment in thread.comments"
@@ -112,6 +115,7 @@
 										<button class="pagecomments-btn pagecomments-btn-quiet" @click.stop="toggleReply( thread.id )">{{ msg( 'pagecomments-ui-cancel' ) }}</button>
 								</div>
 							</div>
+							</template>
 						</div>
 					</div>
 				</div>
