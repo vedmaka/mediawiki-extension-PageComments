@@ -158,16 +158,25 @@ module.exports = exports = {
 			collapsedThreads: {}
 		};
 	},
+	watch: {
+		isPanelOpen() {
+			this.updateBodyPanelOffsetClass();
+		}
+	},
 	mounted() {
 		this.fetchThreads();
 		document.addEventListener( 'mouseup', this.onMouseUp, true );
 		window.addEventListener( 'scroll', this.onScroll, true );
-		window.addEventListener( 'resize', this.onScroll, true );
+		window.addEventListener( 'resize', this.onResize, true );
+		document.body.classList.add( 'pagecomments-panel-shift-enabled' );
+		this.updateBodyPanelOffsetClass();
 	},
 	beforeUnmount() {
 		document.removeEventListener( 'mouseup', this.onMouseUp, true );
 		window.removeEventListener( 'scroll', this.onScroll, true );
-		window.removeEventListener( 'resize', this.onScroll, true );
+		window.removeEventListener( 'resize', this.onResize, true );
+		document.body.classList.remove( 'pagecomments-panel-open' );
+		document.body.classList.remove( 'pagecomments-panel-shift-enabled' );
 		if ( this.syncTimer ) {
 			clearTimeout( this.syncTimer );
 			this.syncTimer = null;
@@ -179,6 +188,17 @@ module.exports = exports = {
 		},
 		onScroll() {
 			this.showAnchorButton = false;
+		},
+		onResize() {
+			this.showAnchorButton = false;
+			this.updateBodyPanelOffsetClass();
+		},
+		updateBodyPanelOffsetClass() {
+			const isDesktop = window.matchMedia( '(min-width: 961px)' ).matches;
+			document.body.classList.toggle(
+				'pagecomments-panel-open',
+				isDesktop && this.isPanelOpen
+			);
 		},
 		onMouseUp( event ) {
 			if ( !this.canWrite ) {

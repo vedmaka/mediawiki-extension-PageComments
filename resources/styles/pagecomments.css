@@ -1,3 +1,15 @@
+:root {
+	--pagecomments-panel-width: 372px;
+}
+
+body.pagecomments-panel-shift-enabled {
+	transition: padding-right 180ms ease;
+}
+
+body.pagecomments-panel-open {
+	padding-right: var( --pagecomments-panel-width );
+}
+
 #pagecomments-root {
 	position: relative;
 	z-index: 60;
@@ -28,7 +40,7 @@
 	position: fixed;
 	top: 60px;
 	right: 0;
-	width: 372px;
+	width: var( --pagecomments-panel-width );
 	height: calc(100vh - 60px);
 	background: #fff;
 	border-left: 1px solid #d6dae1;
@@ -485,6 +497,10 @@
 }
 
 @media ( max-width: 960px ) {
+	body.pagecomments-panel-open {
+		padding-right: 0;
+	}
+
 	.pagecomments-panel {
 		top: auto;
 		bottom: 0;
