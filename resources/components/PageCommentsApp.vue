@@ -113,8 +113,8 @@
 									{{ msg( 'pagecomments-ui-reply' ) }}
 								</button>
 							</div>
-							<div v-if="replyOpen[thread.id]" class="pagecomments-reply">
-									<textarea v-model="replyBody[thread.id]" class="pagecomments-textarea" rows="2"></textarea>
+							<div v-if="replyOpen[thread.id]" class="pagecomments-reply" @click.stop>
+									<textarea v-model="replyBody[thread.id]" class="pagecomments-textarea" rows="2" @click.stop></textarea>
 								<div class="pagecomments-actions">
 										<button class="pagecomments-btn" @click.stop="submitReply( thread.id )">{{ msg( 'pagecomments-ui-submit' ) }}</button>
 										<button class="pagecomments-btn pagecomments-btn-quiet" @click.stop="toggleReply( thread.id )">{{ msg( 'pagecomments-ui-cancel' ) }}</button>

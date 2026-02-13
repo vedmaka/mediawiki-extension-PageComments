@@ -1,5 +1,5 @@
 <template>
-	<li>
+	<li @click.stop>
 		<div class="pagecomments-comment-meta">
 			<div class="pagecomments-comment-meta-main">
 				<strong>{{ comment.actorName }}</strong>
