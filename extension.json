@@ -79,7 +79,8 @@
 				"pagecomments-ui-overlap-selection",
 				"pagecomments-ui-write-required",
 				"pagecomments-ui-error-generic",
-				"pagecomments-ui-orphaned"
+				"pagecomments-ui-orphaned",
+				"pagecomments-ui-comment-count"
 			],
 			"targets": [
 				"desktop",

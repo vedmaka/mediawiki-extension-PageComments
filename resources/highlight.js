@@ -35,7 +35,7 @@ function buildTextMap( root ) {
 	return { nodes, text };
 }
 
-function applyMatchesToDom( map, matches, onThreadClick ) {
+function applyMatchesToDom( map, matches, onThreadClick, onThreadHover, onThreadLeave ) {
 	const normalized = [];
 	const sorted = matches.slice().sort( ( a, b ) => a.start - b.start );
 	let lastEnd = -1;
@@ -100,6 +100,16 @@ function applyMatchesToDom( map, matches, onThreadClick ) {
 				event.stopPropagation();
 				onThreadClick( segment.threadId );
 			} );
+			if ( typeof onThreadHover === 'function' ) {
+				wrapper.addEventListener( 'mouseenter', ( event ) => {
+					onThreadHover( segment.threadId, wrapper, event );
+				} );
+			}
+			if ( typeof onThreadLeave === 'function' ) {
+				wrapper.addEventListener( 'mouseleave', ( event ) => {
+					onThreadLeave( segment.threadId, event );
+				} );
+			}
 			frag.appendChild( wrapper );
 			cursor = segment.end;
 		}

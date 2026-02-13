@@ -25,6 +25,19 @@
 				<button class="pagecomments-btn pagecomments-btn-quiet" @click="cancelNewThread">{{ msg( 'pagecomments-ui-cancel' ) }}</button>
 			</div>
 		</div>
+		<div
+			v-if="highlightPreview.visible"
+			ref="highlightPreviewCard"
+			class="pagecomments-highlight-preview"
+			:style="highlightPreview.style"
+		>
+			<p class="pagecomments-highlight-preview-count">
+				{{ commentCountLabel( highlightPreview.commentCount ) }}
+			</p>
+			<p class="pagecomments-highlight-preview-body">
+				{{ highlightPreview.firstCommentBody }}
+			</p>
+		</div>
 		<aside class="pagecomments-panel" :class="{ 'is-open': isPanelOpen }">
 			<header class="pagecomments-panel-header">
 				<h2>{{ msg( 'pagecomments-ui-title' ) }}</h2>
@@ -162,7 +175,15 @@ module.exports = exports = {
 			isPanelOpen: false,
 			syncTimer: null,
 			collapsedThreads: {},
-			lastHighlightSignature: ''
+			lastHighlightSignature: '',
+			highlightPreview: {
+				visible: false,
+				threadId: null,
+				firstCommentBody: '',
+				commentCount: 0,
+				style: { top: '0px', left: '0px' }
+			},
+			hidePreviewTimer: null
 		};
 	},
 	mounted() {
@@ -179,13 +200,21 @@ module.exports = exports = {
 			clearTimeout( this.syncTimer );
 			this.syncTimer = null;
 		}
+		if ( this.hidePreviewTimer ) {
+			clearTimeout( this.hidePreviewTimer );
+			this.hidePreviewTimer = null;
+		}
 	},
 	methods: {
 		msg( key ) {
 			return mw.message( key ).text();
 		},
+		commentCountLabel( count ) {
+			return mw.message( 'pagecomments-ui-comment-count', Number( count ) || 0 ).text();
+		},
 		onScroll() {
 			this.showAnchorButton = false;
+			this.hideThreadPreview();
 		},
 		onMouseUp( event ) {
 			if ( !this.canWrite ) {
@@ -378,6 +407,7 @@ module.exports = exports = {
 					this.newThreadBody = '';
 					this.capturedAnchor = null;
 					await this.fetchThreads();
+					this.hideThreadPreview();
 					this.isPanelOpen = true;
 					return;
 				}
@@ -392,6 +422,7 @@ module.exports = exports = {
 				this.threads.unshift( newThread );
 				this.collapsedThreads[threadId] = false;
 				this.selectedThreadId = threadId;
+				this.hideThreadPreview();
 				this.isPanelOpen = true;
 				this.$nextTick( () => {
 					this.applyHighlights();
@@ -530,6 +561,7 @@ module.exports = exports = {
 			}
 		},
 		selectThread( threadId ) {
+			this.hideThreadPreview();
 			const panelWasOpen = this.isPanelOpen;
 			this.pendingAnchor = null;
 			this.newThreadBody = '';
@@ -571,6 +603,71 @@ module.exports = exports = {
 			}
 			setTimeout( doScroll, 200 );
 		},
+		onThreadHighlightHover( threadId, sourceElement ) {
+			if ( this.isPanelOpen ) {
+				this.hideThreadPreview();
+				return;
+			}
+			if ( this.hidePreviewTimer ) {
+				clearTimeout( this.hidePreviewTimer );
+				this.hidePreviewTimer = null;
+			}
+			const thread = this.threads.find( ( item ) => item.id === threadId );
+			if ( !thread || !thread.comments || !thread.comments.length ) {
+				this.hideThreadPreview();
+				return;
+			}
+			const firstComment = thread.comments[0];
+			const anchorRect = sourceElement.getBoundingClientRect();
+			this.highlightPreview = {
+				visible: true,
+				threadId,
+				firstCommentBody: String( firstComment.body || '' ),
+				commentCount: thread.comments.length,
+				style: {
+					top: `${anchorRect.bottom + 8}px`,
+					left: `${Math.max( 8, anchorRect.left )}px`
+				}
+			};
+			this.$nextTick( () => this.positionThreadPreview( anchorRect ) );
+		},
+		onThreadHighlightLeave() {
+			if ( this.hidePreviewTimer ) {
+				clearTimeout( this.hidePreviewTimer );
+			}
+			this.hidePreviewTimer = setTimeout( () => {
+				this.hidePreviewTimer = null;
+				this.hideThreadPreview();
+			}, 90 );
+		},
+		positionThreadPreview( anchorRect ) {
+			const card = this.$refs.highlightPreviewCard;
+			if ( !card || !this.highlightPreview.visible ) {
+				return;
+			}
+			const margin = 8;
+			const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+			const viewportHeight = document.documentElement.clientHeight || window.innerHeight;
+			const cardWidth = card.offsetWidth || 320;
+			const cardHeight = card.offsetHeight || 96;
+			let left = anchorRect.left + ( ( anchorRect.width || 0 ) - cardWidth ) / 2;
+			const maxLeft = Math.max( margin, viewportWidth - cardWidth - margin );
+			left = Math.min( Math.max( margin, left ), maxLeft );
+			let top = anchorRect.top - cardHeight - 8;
+			if ( top < margin ) {
+				top = anchorRect.bottom + 8;
+			}
+			const maxTop = Math.max( margin, viewportHeight - cardHeight - margin );
+			top = Math.min( Math.max( margin, top ), maxTop );
+			this.highlightPreview.style = {
+				top: `${top}px`,
+				left: `${left}px`
+			};
+		},
+		hideThreadPreview() {
+			this.highlightPreview.visible = false;
+			this.highlightPreview.threadId = null;
+		},
 		buildHighlightSignature() {
 			return this.threads.map( ( thread ) => {
 				const anchor = thread.anchor || {};
@@ -592,7 +689,9 @@ module.exports = exports = {
 			threadView.applyHighlights(
 				this.threads,
 				this.selectedThreadId,
-				( threadId ) => this.selectThread( threadId )
+				( threadId ) => this.selectThread( threadId ),
+				( threadId, sourceElement ) => this.onThreadHighlightHover( threadId, sourceElement ),
+				() => this.onThreadHighlightLeave()
 			);
 			this.lastHighlightSignature = nextSignature;
 		}

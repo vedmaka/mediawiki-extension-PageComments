@@ -1,7 +1,7 @@
 const anchorUtil = require( './anchor.js' );
 const highlight = require( './highlight.js' );
 
-function applyHighlights( threads, selectedThreadId, onThreadClick ) {
+function applyHighlights( threads, selectedThreadId, onThreadClick, onThreadHover, onThreadLeave ) {
 	const root = anchorUtil.getArticleRoot();
 	if ( !root ) {
 		return;
@@ -31,7 +31,13 @@ function applyHighlights( threads, selectedThreadId, onThreadClick ) {
 		} );
 		thread.orphaned = false;
 	}
-	const applied = highlight.applyMatchesToDom( map, matches, onThreadClick );
+	const applied = highlight.applyMatchesToDom(
+		map,
+		matches,
+		onThreadClick,
+		onThreadHover,
+		onThreadLeave
+	);
 	const appliedIds = new Set( applied.map( ( item ) => item.threadId ) );
 	for ( const thread of threads ) {
 		if ( !appliedIds.has( thread.id ) ) {
