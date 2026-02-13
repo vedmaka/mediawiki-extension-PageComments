@@ -12,15 +12,6 @@ function findThreadIndex( threads, threadId ) {
 	return threads.findIndex( ( thread ) => thread.id === threadId );
 }
 
-function moveThreadToTop( threads, threadId ) {
-	const index = findThreadIndex( threads, threadId );
-	if ( index <= 0 ) {
-		return;
-	}
-	const thread = threads.splice( index, 1 )[0];
-	threads.unshift( thread );
-}
-
 function buildOptimisticComment( threadId, commentId, body, timestamp, actorName ) {
 	return {
 		id: commentId,
@@ -70,7 +61,6 @@ function appendReply( threads, threadId, commentId, body ) {
 	const actorName = getCurrentUserName();
 	threads[index].comments.push( buildOptimisticComment( threadId, commentId, body, timestamp, actorName ) );
 	threads[index].updatedAt = timestamp;
-	moveThreadToTop( threads, threadId );
 	return true;
 }
 
@@ -115,7 +105,6 @@ function removeComment( threads, threadId, commentId ) {
 		return { removed: true, threadDeleted: true };
 	}
 	thread.updatedAt = getNowTimestamp();
-	moveThreadToTop( threads, threadId );
 	return { removed: true, threadDeleted: false };
 }
 

@@ -36,7 +36,9 @@ trait ApiPageCommentsListTrait {
 				'pct_page_id' => $pageId,
 				'pct_namespace' => NS_MAIN
 			] )
-			->orderBy( 'pct_updated_at', 'DESC' )
+			// Thread list order: newest thread first by creation time.
+			->orderBy( 'pct_created_at', 'DESC' )
+			->orderBy( 'pct_id', 'DESC' )
 			->caller( __METHOD__ )
 			->fetchResultSet();
 		$threads = [];
