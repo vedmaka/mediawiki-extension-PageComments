@@ -483,18 +483,49 @@
 }
 
 .pagecomments-highlight-open {
-	background: #d9ebff;
-	outline-color: #4a79be;
+	background: rgba( 74, 121, 190, 0.18 );
+	outline-color: rgba( 74, 121, 190, 0.42 );
+	animation: pagecomments-highlight-open-fade-in 280ms ease-out;
 }
 
 .pagecomments-highlight-resolved {
-	background: #dcf6de;
-	outline-color: #4c8f59;
+	background: rgba( 76, 143, 89, 0.16 );
+	outline-color: rgba( 76, 143, 89, 0.4 );
+	animation: pagecomments-highlight-resolved-fade-in 280ms ease-out;
 }
 
 .pagecomments-highlight-selected {
-	background: #ffd86b;
-	outline: 2px solid #2a6bb7;
+	background: #ffe9a8;
+	outline: 2px solid #be8f2b;
+}
+
+@keyframes pagecomments-highlight-open-fade-in {
+	from {
+		background-color: transparent;
+		outline-color: transparent;
+	}
+	to {
+		background-color: rgba( 74, 121, 190, 0.18 );
+		outline-color: rgba( 74, 121, 190, 0.42 );
+	}
+}
+
+@keyframes pagecomments-highlight-resolved-fade-in {
+	from {
+		background-color: transparent;
+		outline-color: transparent;
+	}
+	to {
+		background-color: rgba( 76, 143, 89, 0.16 );
+		outline-color: rgba( 76, 143, 89, 0.4 );
+	}
+}
+
+@media ( prefers-reduced-motion: reduce ) {
+	.pagecomments-highlight-open,
+	.pagecomments-highlight-resolved {
+		animation: none;
+	}
 }
 
 @media ( max-width: 960px ) {
