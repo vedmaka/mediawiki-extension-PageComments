@@ -130,10 +130,30 @@ function updateSelectedHighlightClasses( selectedThreadId ) {
 	}
 }
 
+function updateUnseenHighlightClasses( isThreadUnseen ) {
+	const marks = document.querySelectorAll( '.pagecomments-highlight' );
+	const taggedThreads = new Set();
+	for ( const mark of marks ) {
+		const threadId = mark.dataset.threadId || '';
+		const unseen = typeof isThreadUnseen === 'function' && isThreadUnseen( threadId );
+		if ( !unseen ) {
+			mark.classList.remove( 'pagecomments-highlight-unseen' );
+			continue;
+		}
+		if ( taggedThreads.has( threadId ) ) {
+			mark.classList.remove( 'pagecomments-highlight-unseen' );
+			continue;
+		}
+		taggedThreads.add( threadId );
+		mark.classList.add( 'pagecomments-highlight-unseen' );
+	}
+}
+
 module.exports = {
 	clearHighlights,
 	resolveAnchorOffset,
 	buildTextMap,
 	applyMatchesToDom,
-	updateSelectedHighlightClasses
+	updateSelectedHighlightClasses,
+	updateUnseenHighlightClasses
 };

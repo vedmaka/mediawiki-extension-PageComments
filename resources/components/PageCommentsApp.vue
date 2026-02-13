@@ -72,6 +72,7 @@
 							'is-open': thread.state === 'open',
 							'is-resolved': thread.state === 'resolved'
 						}"
+						@click.capture="markThreadSeen( thread.id )"
 						@click="selectThread( thread.id )"
 					>
 						<div class="pagecomments-thread-head">
@@ -88,6 +89,7 @@
 									</span>
 								</button>
 								<span v-else class="pagecomments-thread-state">{{ thread.state }}</span>
+								<span v-if="isThreadUnseen( thread.id )" class="pagecomments-unseen-dot" aria-hidden="true"></span>
 							</div>
 							<button
 								class="pagecomments-thread-toggle"
@@ -117,22 +119,22 @@
 										@delete-comment="deleteComment"
 									></page-comments-comment-item>
 								</ul>
-							<div class="pagecomments-actions">
-								<button
-									v-if="canWrite"
-									class="pagecomments-btn pagecomments-btn-quiet"
-									@click.stop="toggleReply( thread.id )"
-								>
-									{{ msg( 'pagecomments-ui-reply' ) }}
-								</button>
-							</div>
-							<div v-if="replyOpen[thread.id]" class="pagecomments-reply" @click.stop>
-									<textarea v-model="replyBody[thread.id]" class="pagecomments-textarea" rows="2" @click.stop></textarea>
 								<div class="pagecomments-actions">
+									<button
+										v-if="canWrite"
+										class="pagecomments-btn pagecomments-btn-quiet"
+										@click.stop="toggleReply( thread.id )"
+									>
+										{{ msg( 'pagecomments-ui-reply' ) }}
+									</button>
+								</div>
+								<div v-if="replyOpen[thread.id]" class="pagecomments-reply" @click.stop>
+									<textarea v-model="replyBody[thread.id]" class="pagecomments-textarea" rows="2" @click.stop></textarea>
+									<div class="pagecomments-actions">
 										<button class="pagecomments-btn" @click.stop="submitReply( thread.id )">{{ msg( 'pagecomments-ui-submit' ) }}</button>
 										<button class="pagecomments-btn pagecomments-btn-quiet" @click.stop="toggleReply( thread.id )">{{ msg( 'pagecomments-ui-cancel' ) }}</button>
+									</div>
 								</div>
-							</div>
 							</template>
 						</div>
 					</div>
@@ -176,6 +178,7 @@ module.exports = exports = {
 			syncTimer: null,
 			collapsedThreads: {},
 			lastHighlightSignature: '',
+			seenThreadComments: {},
 			highlightPreview: {
 				visible: false,
 				threadId: null,
@@ -187,6 +190,7 @@ module.exports = exports = {
 		};
 	},
 	mounted() {
+		this.loadSeenThreads();
 		this.fetchThreads();
 		document.addEventListener( 'mouseup', this.onMouseUp, true );
 		window.addEventListener( 'scroll', this.onScroll, true );
@@ -208,6 +212,98 @@ module.exports = exports = {
 	methods: {
 		msg( key ) {
 			return mw.message( key ).text();
+		},
+		getSeenStorageKey() {
+			const userId = Number( mw.config.get( 'wgUserId' ) ) || 0;
+			// Storage shape: threadId -> highest seen commentId for this user/page.
+			return `pagecomments-seen-v1:${userId}:${this.pageId}`;
+		},
+		loadSeenThreads() {
+			this.seenThreadComments = {};
+			if ( !this.pageId || typeof window === 'undefined' || !window.localStorage ) {
+				return;
+			}
+			try {
+				const raw = window.localStorage.getItem( this.getSeenStorageKey() );
+				if ( !raw ) {
+					return;
+				}
+				const parsed = JSON.parse( raw );
+				if ( !parsed || typeof parsed !== 'object' ) {
+					return;
+				}
+				const next = {};
+				for ( const key of Object.keys( parsed ) ) {
+					const threadId = Number( key );
+					const commentId = Number( parsed[key] );
+					if (
+						Number.isInteger( threadId ) && threadId > 0 &&
+						Number.isInteger( commentId ) && commentId >= 0
+					) {
+						next[String( threadId )] = commentId;
+					}
+				}
+				this.seenThreadComments = next;
+			} catch ( e ) {}
+		},
+		saveSeenThreads() {
+			if ( !this.pageId || typeof window === 'undefined' || !window.localStorage ) {
+				return;
+			}
+			try {
+				window.localStorage.setItem(
+					this.getSeenStorageKey(),
+					JSON.stringify( this.seenThreadComments )
+				);
+			} catch ( e ) {}
+		},
+		getLatestThreadCommentId( thread ) {
+			if ( !thread || !thread.comments || !thread.comments.length ) {
+				return 0;
+			}
+			let maxId = 0;
+			for ( const comment of thread.comments ) {
+				const id = Number( comment.id );
+				if ( Number.isInteger( id ) && id > maxId ) {
+					maxId = id;
+				}
+			}
+			return maxId;
+		},
+		isThreadUnseen( threadId ) {
+			const thread = this.threads.find( ( item ) => item.id === threadId );
+			if ( !thread ) {
+				return false;
+			}
+			const latestCommentId = this.getLatestThreadCommentId( thread );
+			if ( latestCommentId <= 0 ) {
+				return false;
+			}
+			const seenCommentId = Number( this.seenThreadComments[String( threadId )] ) || 0;
+			return latestCommentId > seenCommentId;
+		},
+		refreshUnseenHighlightDots() {
+			highlight.updateUnseenHighlightClasses(
+				( threadId ) => this.isThreadUnseen( Number( threadId ) )
+			);
+		},
+		markThreadSeen( threadId ) {
+			const thread = this.threads.find( ( item ) => item.id === threadId );
+			if ( !thread ) {
+				return;
+			}
+			const latestCommentId = this.getLatestThreadCommentId( thread );
+			if ( latestCommentId <= 0 ) {
+				return;
+			}
+			const key = String( threadId );
+			const seenCommentId = Number( this.seenThreadComments[key] ) || 0;
+			if ( latestCommentId <= seenCommentId ) {
+				return;
+			}
+			this.seenThreadComments[key] = latestCommentId;
+			this.saveSeenThreads();
+			this.refreshUnseenHighlightDots();
 		},
 		commentCountLabel( count ) {
 			return mw.message( 'pagecomments-ui-comment-count', Number( count ) || 0 ).text();
@@ -419,24 +515,26 @@ module.exports = exports = {
 					pendingAnchor,
 					body
 				} );
-				this.threads.unshift( newThread );
-				this.collapsedThreads[threadId] = false;
-				this.selectedThreadId = threadId;
-				this.hideThreadPreview();
-				this.isPanelOpen = true;
-				this.$nextTick( () => {
-					this.applyHighlights();
-					this.scrollToThreadInPanel( threadId, false );
-				} );
-				this.scheduleBackgroundSync();
-				this.pendingAnchor = null;
-				this.newThreadBody = '';
-				this.capturedAnchor = null;
+					this.threads.unshift( newThread );
+					this.collapsedThreads[threadId] = false;
+					this.selectedThreadId = threadId;
+					this.markThreadSeen( threadId );
+					this.hideThreadPreview();
+					this.isPanelOpen = true;
+					this.$nextTick( () => {
+						this.applyHighlights();
+						this.scrollToThreadInPanel( threadId, false );
+					} );
+					this.scheduleBackgroundSync();
+					this.pendingAnchor = null;
+					this.newThreadBody = '';
+					this.capturedAnchor = null;
 			} catch ( e ) {
 				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
 			}
 		},
 		toggleReply( threadId ) {
+			this.markThreadSeen( threadId );
 			this.replyOpen[threadId] = !this.replyOpen[threadId];
 			if ( this.replyOpen[threadId] ) {
 				this.collapsedThreads[threadId] = false;
@@ -446,6 +544,7 @@ module.exports = exports = {
 			}
 		},
 		async submitReply( threadId ) {
+			this.markThreadSeen( threadId );
 			const body = this.replyBody[threadId] || '';
 			if ( !body.trim() ) {
 				return;
@@ -465,9 +564,11 @@ module.exports = exports = {
 				const updated = commentId &&
 					panelState.appendReply( this.threads, threadId, commentId, body.trim() );
 				if ( updated ) {
+					this.markThreadSeen( threadId );
 					this.scheduleBackgroundSync();
 				} else {
 					await this.fetchThreads();
+					this.markThreadSeen( threadId );
 				}
 				this.replyBody[threadId] = '';
 				this.replyOpen[threadId] = false;
@@ -482,6 +583,7 @@ module.exports = exports = {
 			if ( !body ) {
 				return;
 			}
+			this.markThreadSeen( threadId );
 			this.errorMessage = '';
 			const api = new mw.Api();
 			api.postWithToken( 'csrf', {
@@ -507,6 +609,7 @@ module.exports = exports = {
 		deleteComment( payload ) {
 			const threadId = Number( payload.threadId );
 			const commentId = Number( payload.commentId );
+			this.markThreadSeen( threadId );
 			this.errorMessage = '';
 			if ( typeof payload.onDone === 'function' ) {
 				payload.onDone();
@@ -540,6 +643,7 @@ module.exports = exports = {
 			} );
 		},
 		async setThreadState( threadId, state ) {
+			this.markThreadSeen( threadId );
 			this.errorMessage = '';
 			try {
 				const api = new mw.Api();
@@ -562,6 +666,7 @@ module.exports = exports = {
 		},
 		selectThread( threadId ) {
 			this.hideThreadPreview();
+			this.markThreadSeen( threadId );
 			const panelWasOpen = this.isPanelOpen;
 			this.pendingAnchor = null;
 			this.newThreadBody = '';
@@ -684,6 +789,7 @@ module.exports = exports = {
 			const nextSignature = this.buildHighlightSignature();
 			if ( nextSignature === this.lastHighlightSignature ) {
 				highlight.updateSelectedHighlightClasses( this.selectedThreadId );
+				this.refreshUnseenHighlightDots();
 				return;
 			}
 			threadView.applyHighlights(
@@ -694,6 +800,7 @@ module.exports = exports = {
 				() => this.onThreadHighlightLeave()
 			);
 			this.lastHighlightSignature = nextSignature;
+			this.refreshUnseenHighlightDots();
 		}
 	}
 };

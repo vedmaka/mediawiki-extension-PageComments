@@ -8,6 +8,7 @@ MVP features:
 - Users can delete their own comments (or any comment with `pagecomments-moderate`).
 - Users can resolve/reopen threads.
 - Client UI shown on `NS_MAIN` view pages.
+- Per-user unseen tracking in `localStorage` with blue-dot indicators in text highlights and thread cards.
 
 ## Install
 
