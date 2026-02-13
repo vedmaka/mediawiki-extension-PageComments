@@ -2,6 +2,8 @@
 
 Inline page comments for MediaWiki.
 
+<img width="1155" height="851" alt="PageCommentsExtension1" src="https://github.com/user-attachments/assets/dbd2f8b3-b0ee-4a41-b87e-e1435ff7a222" />
+
 # Requirements
 
 * MediaWiki 1.43+
