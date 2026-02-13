@@ -1,3 +1,5 @@
+const anchorUtil = require( './anchor.js' );
+
 function clearHighlights() {
 	const marks = document.querySelectorAll( '.pagecomments-highlight' );
 	for ( const mark of marks ) {
@@ -7,19 +9,8 @@ function clearHighlights() {
 }
 
 function resolveAnchorOffset( text, anchor ) {
-	if ( !anchor || !anchor.exact ) {
-		return -1;
-	}
-	const exact = anchor.exact;
-	const startHint = Number.isInteger( anchor.start ) ? anchor.start : null;
-	if (
-		startHint !== null &&
-		startHint >= 0 &&
-		text.slice( startHint, startHint + exact.length ) === exact
-	) {
-		return startHint;
-	}
-	return text.indexOf( exact );
+	const range = anchorUtil.resolveAnchorRange( anchor, text );
+	return range ? range.start : -1;
 }
 
 function buildTextMap( root ) {

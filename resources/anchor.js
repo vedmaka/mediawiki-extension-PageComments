@@ -62,15 +62,6 @@ function buildAnchorFromRange( range, root ) {
 	};
 }
 
-function isAnchorRangeValid( anchor ) {
-	if ( !anchor ) {
-		return false;
-	}
-	const start = Number( anchor.start );
-	const end = Number( anchor.end );
-	return Number.isInteger( start ) && Number.isInteger( end ) && start >= 0 && end > start;
-}
-
 function rangesOverlap( aStart, aEnd, bStart, bEnd ) {
 	return aStart < bEnd && bStart < aEnd;
 }
@@ -82,30 +73,62 @@ function getAnchorExact( anchor ) {
 	return anchor.exact.trim();
 }
 
-function findNearestOccurrence( text, needle, nearStart, windowSize ) {
-	if ( !needle ) {
-		return -1;
+function getContextValue( value ) {
+	return typeof value === 'string' ? value : '';
+}
+
+function findOccurrences( text, needle, limit ) {
+	const matches = [];
+	if ( !text || !needle ) {
+		return matches;
 	}
-	const scanStart = Math.max( 0, nearStart - windowSize );
-	const scanEnd = Math.min( text.length, nearStart + needle.length + windowSize );
-	const segment = text.slice( scanStart, scanEnd );
-	let from = 0;
-	let bestIndex = -1;
-	let bestDistance = Number.MAX_SAFE_INTEGER;
-	while ( true ) {
-		const idx = segment.indexOf( needle, from );
-		if ( idx < 0 ) {
+	let cursor = 0;
+	while ( matches.length < limit ) {
+		const index = text.indexOf( needle, cursor );
+		if ( index < 0 ) {
 			break;
 		}
-		const absolute = scanStart + idx;
-		const distance = Math.abs( absolute - nearStart );
-		if ( distance < bestDistance ) {
-			bestDistance = distance;
-			bestIndex = absolute;
-		}
-		from = idx + 1;
+		matches.push( index );
+		cursor = index + 1;
 	}
-	return bestIndex;
+	return matches;
+}
+
+function hasPrefixMatch( text, start, prefix ) {
+	if ( !prefix ) {
+		return true;
+	}
+	return text.slice( Math.max( 0, start - prefix.length ), start ) === prefix;
+}
+
+function hasSuffixMatch( text, start, exactLength, suffix ) {
+	if ( !suffix ) {
+		return true;
+	}
+	return text.slice( start + exactLength, start + exactLength + suffix.length ) === suffix;
+}
+
+function pickNearestStart( starts, hintStart ) {
+	if ( !starts.length ) {
+		return -1;
+	}
+	if ( !Number.isInteger( hintStart ) || hintStart < 0 ) {
+		return starts[0];
+	}
+	let bestStart = starts[0];
+	let bestDistance = Math.abs( starts[0] - hintStart );
+	for ( const start of starts ) {
+		const distance = Math.abs( start - hintStart );
+		if ( distance < bestDistance ) {
+			bestStart = start;
+			bestDistance = distance;
+		}
+	}
+	return bestStart;
+}
+
+function toRange( start, exactLength ) {
+	return { start, end: start + exactLength };
 }
 
 function resolveAnchorRange( anchor, articleText ) {
@@ -113,34 +136,88 @@ function resolveAnchorRange( anchor, articleText ) {
 	if ( !exact ) {
 		return null;
 	}
-	const start = Number( anchor.start );
-	const end = Number( anchor.end );
-	if ( Number.isInteger( start ) && start >= 0 ) {
-		let resolvedStart = start;
-		if ( articleText ) {
-			if ( articleText.slice( resolvedStart, resolvedStart + exact.length ) !== exact ) {
-				const nearby = findNearestOccurrence( articleText, exact, resolvedStart, 32 );
-				if ( nearby >= 0 ) {
-					resolvedStart = nearby;
-				} else if (
-					Number.isInteger( end ) &&
-					end > start &&
-					articleText.slice( end - exact.length, end ) === exact
-				) {
-					resolvedStart = end - exact.length;
-				} else {
-					return null;
-				}
+	const exactLength = exact.length;
+	const hintStart = Number( anchor.start );
+	const hintEnd = Number( anchor.end );
+	const hasHintStart = Number.isInteger( hintStart ) && hintStart >= 0;
+
+	if ( typeof articleText !== 'string' || articleText === '' ) {
+		if ( hasHintStart ) {
+			return toRange( hintStart, exactLength );
+		}
+		if ( Number.isInteger( hintEnd ) && hintEnd > 0 ) {
+			const recoveredStart = hintEnd - exactLength;
+			if ( recoveredStart >= 0 ) {
+				return toRange( recoveredStart, exactLength );
 			}
 		}
-		return { start: resolvedStart, end: resolvedStart + exact.length };
+		return null;
 	}
-	if ( Number.isInteger( end ) && end > 0 ) {
-		const recoveredStart = end - exact.length;
-		if ( recoveredStart >= 0 ) {
-			return { start: recoveredStart, end: recoveredStart + exact.length };
+
+	if ( hasHintStart && articleText.slice( hintStart, hintStart + exactLength ) === exact ) {
+		return toRange( hintStart, exactLength );
+	}
+	if ( Number.isInteger( hintEnd ) && hintEnd > 0 ) {
+		const endRecoveredStart = hintEnd - exactLength;
+		if (
+			endRecoveredStart >= 0 &&
+			articleText.slice( endRecoveredStart, hintEnd ) === exact
+		) {
+			return toRange( endRecoveredStart, exactLength );
 		}
 	}
+
+	const occurrences = findOccurrences( articleText, exact, 5000 );
+	if ( !occurrences.length ) {
+		return null;
+	}
+
+	const prefix = getContextValue( anchor.prefix );
+	const suffix = getContextValue( anchor.suffix );
+
+	const fullContextMatches = occurrences.filter( ( start ) =>
+		hasPrefixMatch( articleText, start, prefix ) &&
+		hasSuffixMatch( articleText, start, exactLength, suffix )
+	);
+	if ( fullContextMatches.length ) {
+		return toRange( pickNearestStart( fullContextMatches, hintStart ), exactLength );
+	}
+
+	const prefixMatches = prefix ?
+		occurrences.filter( ( start ) => hasPrefixMatch( articleText, start, prefix ) ) :
+		[];
+	const suffixMatches = suffix ?
+		occurrences.filter( ( start ) => hasSuffixMatch( articleText, start, exactLength, suffix ) ) :
+		[];
+
+	if ( prefixMatches.length === 1 ) {
+		return toRange( prefixMatches[0], exactLength );
+	}
+	if ( suffixMatches.length === 1 ) {
+		return toRange( suffixMatches[0], exactLength );
+	}
+
+	if ( hasHintStart ) {
+		const nearby = occurrences.filter( ( start ) => Math.abs( start - hintStart ) <= 256 );
+		if ( nearby.length === 1 ) {
+			return toRange( nearby[0], exactLength );
+		}
+		if ( nearby.length > 1 ) {
+			const nearbyContext = nearby.filter( ( start ) =>
+				hasPrefixMatch( articleText, start, prefix ) ||
+				hasSuffixMatch( articleText, start, exactLength, suffix )
+			);
+			if ( nearbyContext.length ) {
+				return toRange( pickNearestStart( nearbyContext, hintStart ), exactLength );
+			}
+		}
+	}
+
+	if ( occurrences.length === 1 ) {
+		return toRange( occurrences[0], exactLength );
+	}
+
+	// Ambiguous repeated token without reliable context; avoid wrong anchoring.
 	return null;
 }
 
@@ -168,5 +245,6 @@ module.exports = {
 	isInArticle,
 	getEventTargetElement,
 	buildAnchorFromRange,
-	hasOverlappingAnchor
+	hasOverlappingAnchor,
+	resolveAnchorRange
 };
