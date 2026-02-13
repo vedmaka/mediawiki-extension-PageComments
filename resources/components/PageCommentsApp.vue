@@ -178,7 +178,8 @@ module.exports = exports = {
 			replyOpen: {},
 			replyBody: {},
 			isPanelOpen: false,
-			syncTimer: null,
+			newThreadPollTimer: null,
+			newThreadPollInFlight: false,
 			collapsedThreads: {},
 			lastHighlightSignature: '',
 			seenThreadComments: {},
@@ -195,6 +196,7 @@ module.exports = exports = {
 	mounted() {
 		this.loadSeenThreads();
 		this.fetchThreads();
+		this.startNewThreadPolling();
 		document.addEventListener( 'mouseup', this.onMouseUp, true );
 		window.addEventListener( 'scroll', this.onScroll, true );
 		window.addEventListener( 'resize', this.onScroll, true );
@@ -203,10 +205,7 @@ module.exports = exports = {
 		document.removeEventListener( 'mouseup', this.onMouseUp, true );
 		window.removeEventListener( 'scroll', this.onScroll, true );
 		window.removeEventListener( 'resize', this.onScroll, true );
-		if ( this.syncTimer ) {
-			clearTimeout( this.syncTimer );
-			this.syncTimer = null;
-		}
+		this.stopNewThreadPolling();
 		if ( this.hidePreviewTimer ) {
 			clearTimeout( this.hidePreviewTimer );
 			this.hidePreviewTimer = null;
@@ -448,24 +447,70 @@ module.exports = exports = {
 				left: `${left}px`
 			};
 		},
-		scheduleBackgroundSync() {
-			if ( this.syncTimer ) {
-				clearTimeout( this.syncTimer );
+		startNewThreadPolling() {
+			this.stopNewThreadPolling();
+			if ( !this.pageId ) {
+				return;
 			}
-			this.syncTimer = setTimeout( () => {
-				this.syncTimer = null;
-				const api = new mw.Api();
-				api.get( {
-					action: 'pagecomments',
-					pcaction: 'list',
-					pageid: this.pageId,
-					format: 'json'
-				} ).then( ( data ) => {
-					this.threads = ( data.pagecomments && data.pagecomments.threads ) || [];
-					this.syncCollapsedThreads();
-					this.$nextTick( () => this.applyHighlights() );
-				} ).catch( () => {} );
-			}, 900 );
+			// Keep local state stable; pull full list only when a new thread appears.
+			this.newThreadPollTimer = setInterval( () => {
+				this.refreshThreadsIfNewThreadAdded();
+			}, 15000 );
+		},
+		stopNewThreadPolling() {
+			if ( !this.newThreadPollTimer ) {
+				return;
+			}
+			clearInterval( this.newThreadPollTimer );
+			this.newThreadPollTimer = null;
+		},
+		hasNewThread( nextThreads ) {
+			if ( !Array.isArray( nextThreads ) || !nextThreads.length ) {
+				return false;
+			}
+			const currentThreadIds = new Set(
+				this.threads.map( ( thread ) => Number( thread.id ) )
+			);
+			for ( const thread of nextThreads ) {
+				const threadId = Number( thread.id );
+				if (
+					Number.isInteger( threadId ) &&
+					threadId > 0 &&
+					!currentThreadIds.has( threadId )
+				) {
+					return true;
+				}
+			}
+			return false;
+		},
+		async refreshThreadsIfNewThreadAdded() {
+			if ( this.newThreadPollInFlight || !this.pageId ) {
+				return;
+			}
+			this.newThreadPollInFlight = true;
+			try {
+				const nextThreads = await this.fetchThreadsFromApi();
+				if ( !this.hasNewThread( nextThreads ) ) {
+					return;
+				}
+				this.threads = nextThreads;
+				this.syncCollapsedThreads();
+				this.$nextTick( () => this.applyHighlights() );
+			} catch ( e ) {
+				// Ignore polling errors; user actions continue to use local state.
+			} finally {
+				this.newThreadPollInFlight = false;
+			}
+		},
+		async fetchThreadsFromApi() {
+			const api = new mw.Api();
+			const data = await api.get( {
+				action: 'pagecomments',
+				pcaction: 'list',
+				pageid: this.pageId,
+				format: 'json'
+			} );
+			return ( data.pagecomments && data.pagecomments.threads ) || [];
 		},
 		isThreadCollapsed( threadId ) {
 			return !!this.collapsedThreads[threadId];
@@ -484,24 +529,21 @@ module.exports = exports = {
 			}
 			this.collapsedThreads = next;
 		},
-		async fetchThreads() {
-			this.loading = true;
+		async fetchThreads( showLoading = true ) {
+			if ( showLoading ) {
+				this.loading = true;
+			}
 			this.errorMessage = '';
 			try {
-				const api = new mw.Api();
-				const data = await api.get( {
-					action: 'pagecomments',
-					pcaction: 'list',
-					pageid: this.pageId,
-					format: 'json'
-				} );
-				this.threads = ( data.pagecomments && data.pagecomments.threads ) || [];
+				this.threads = await this.fetchThreadsFromApi();
 				this.syncCollapsedThreads();
 				this.$nextTick( () => this.applyHighlights() );
 			} catch ( e ) {
 				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
 			} finally {
-				this.loading = false;
+				if ( showLoading ) {
+					this.loading = false;
+				}
 			}
 		},
 		async submitNewThread() {
@@ -535,7 +577,7 @@ module.exports = exports = {
 					this.pendingAnchor = null;
 					this.newThreadBody = '';
 					this.capturedAnchor = null;
-					await this.fetchThreads();
+					await this.fetchThreads( false );
 					this.hideThreadPreview();
 					this.isPanelOpen = true;
 					return;
@@ -558,7 +600,6 @@ module.exports = exports = {
 						this.applyHighlights();
 						this.scrollToThreadInPanel( threadId, false );
 					} );
-					this.scheduleBackgroundSync();
 					this.pendingAnchor = null;
 					this.newThreadBody = '';
 					this.capturedAnchor = null;
@@ -598,9 +639,8 @@ module.exports = exports = {
 					panelState.appendReply( this.threads, threadId, commentId, body.trim() );
 				if ( updated ) {
 					this.markThreadSeen( threadId );
-					this.scheduleBackgroundSync();
 				} else {
-					await this.fetchThreads();
+					await this.fetchThreads( false );
 					this.markThreadSeen( threadId );
 				}
 				this.replyBody[threadId] = '';
@@ -628,12 +668,11 @@ module.exports = exports = {
 			} ).then( () => {
 				const updated = panelState.updateCommentBody( this.threads, threadId, commentId, body );
 				if ( !updated ) {
-					return this.fetchThreads();
+					return this.fetchThreads( false );
 				}
 				if ( typeof payload.onDone === 'function' ) {
 					payload.onDone();
 				}
-				this.scheduleBackgroundSync();
 				return null;
 			} ).catch( () => {
 				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
@@ -657,7 +696,8 @@ module.exports = exports = {
 				const resultPayload = data && data.pagecomments ? data.pagecomments : {};
 				const updated = panelState.removeComment( this.threads, threadId, commentId );
 				if ( updated.removed ) {
-					if ( updated.threadDeleted ) {
+					const threadDeleted = updated.threadDeleted || !!resultPayload.threadDeleted;
+					if ( threadDeleted ) {
 						delete this.collapsedThreads[threadId];
 						delete this.replyOpen[threadId];
 						delete this.replyBody[threadId];
@@ -666,9 +706,10 @@ module.exports = exports = {
 						}
 					}
 					this.$nextTick( () => this.applyHighlights() );
-					this.scheduleBackgroundSync();
+					// Delete response already includes authoritative thread removal state.
+					// Keep panel stable: no full-list background refresh after delete.
 				} else if ( resultPayload.threadId ) {
-					return this.fetchThreads();
+					return this.fetchThreads( false );
 				}
 				return null;
 			} ).catch( () => {
@@ -689,9 +730,8 @@ module.exports = exports = {
 				const updated = panelState.setThreadState( this.threads, threadId, state );
 				if ( updated ) {
 					this.collapsedThreads[threadId] = state === 'resolved';
-					this.scheduleBackgroundSync();
 				} else {
-					await this.fetchThreads();
+					await this.fetchThreads( false );
 				}
 			} catch ( e ) {
 				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );

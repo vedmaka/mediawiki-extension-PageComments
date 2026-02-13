@@ -15,7 +15,9 @@ function getNowTimestamp() {
 }
 
 function findThreadIndex( threads, threadId ) {
-	return threads.findIndex( ( thread ) => thread.id === threadId );
+	return threads.findIndex(
+		( thread ) => Number( thread.id ) === Number( threadId )
+	);
 }
 
 function buildOptimisticComment( threadId, commentId, body, timestamp, actorName, actorId ) {
@@ -96,7 +98,9 @@ function updateCommentBody( threads, threadId, commentId, body ) {
 		return false;
 	}
 	const thread = threads[index];
-	const comment = thread.comments.find( ( item ) => item.id === commentId );
+	const comment = thread.comments.find(
+		( item ) => Number( item.id ) === Number( commentId )
+	);
 	if ( !comment ) {
 		return false;
 	}
@@ -112,7 +116,9 @@ function removeComment( threads, threadId, commentId ) {
 	}
 	const thread = threads[index];
 	const oldCount = thread.comments.length;
-	thread.comments = thread.comments.filter( ( comment ) => comment.id !== commentId );
+	thread.comments = thread.comments.filter(
+		( comment ) => Number( comment.id ) !== Number( commentId )
+	);
 	if ( thread.comments.length === oldCount ) {
 		return { removed: false, threadDeleted: false };
 	}
