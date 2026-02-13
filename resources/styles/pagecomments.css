@@ -494,6 +494,7 @@
 .pagecomments-highlight {
 	outline: 1px solid transparent;
 	cursor: pointer;
+	transition: background-color 120ms ease, outline-color 120ms ease, box-shadow 120ms ease;
 }
 
 .pagecomments-highlight-open {
@@ -506,6 +507,16 @@
 	background: rgba( 76, 143, 89, 0.16 );
 	outline-color: rgba( 76, 143, 89, 0.4 );
 	animation: pagecomments-highlight-resolved-fade-in 280ms ease-out;
+}
+
+.pagecomments-highlight-open:hover {
+	background: rgba( 74, 121, 190, 0.26 );
+	outline-color: rgba( 74, 121, 190, 0.62 );
+}
+
+.pagecomments-highlight-resolved:hover {
+	background: rgba( 76, 143, 89, 0.24 );
+	outline-color: rgba( 76, 143, 89, 0.58 );
 }
 
 .pagecomments-highlight-selected {
