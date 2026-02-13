@@ -4,7 +4,7 @@
 			"Alexey"
 		]
 	},
-	"pagecomments-desc": "Adds Google-Doc-style inline page comments for main namespace pages.",
+	"pagecomments-desc": "Adds Google-Doc-style inline page comments for configured namespaces.",
 	"right-pagecomments-write": "Create page comments and replies",
 	"right-pagecomments-moderate": "Moderate page comments",
 	"pagecomments-ui-title": "Comments",
@@ -35,7 +35,7 @@
 	"pagecomments-api-error-missing-threadid": "Missing or invalid thread id.",
 	"pagecomments-api-error-missing-commentid": "Missing or invalid comment id.",
 	"pagecomments-api-error-invalid-page": "Target page does not exist.",
-	"pagecomments-api-error-main-namespace-only": "Comments allowed only in main namespace.",
+	"pagecomments-api-error-main-namespace-only": "Comments are not enabled for this namespace.",
 	"pagecomments-api-error-invalid-anchor": "Invalid comment anchor payload.",
 	"pagecomments-api-error-anchor-too-long": "Selected text is too long.",
 	"pagecomments-api-error-anchor-overlap": "Selection overlaps an existing commented range.",

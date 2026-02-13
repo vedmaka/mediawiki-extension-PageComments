@@ -11,7 +11,8 @@ trait ApiPageCommentsListTrait {
 			$this->dieWithError( 'pagecomments-api-error-missing-pageid', 'pagecomments-missing-pageid' );
 		}
 		$title = $this->getTitleFromPageId( $pageId );
-		$this->assertMainNamespace( $title );
+		$this->assertNamespaceEnabledForTitle( $title );
+		$namespace = (int)$title->getNamespace();
 		$dbr = MediaWikiServices::getInstance()->getConnectionProvider()->getReplicaDatabase();
 		$user = $this->getUser();
 		$userActorId = (int)$user->getActorId();
@@ -34,7 +35,7 @@ trait ApiPageCommentsListTrait {
 			->join( 'actor', 'thread_actor', 'thread_actor.actor_id = pct_actor_id' )
 			->where( [
 				'pct_page_id' => $pageId,
-				'pct_namespace' => NS_MAIN
+				'pct_namespace' => $namespace
 			] )
 			// Thread list order: newest thread first by creation time.
 			->orderBy( 'pct_created_at', 'DESC' )

@@ -1,6 +1,6 @@
 # PageComments
 
-Inline page comments for MediaWiki main namespace pages.
+Inline page comments for MediaWiki pages in configured namespaces.
 
 Features:
 - Logged-in users can create comment threads from selected text.

@@ -33,9 +33,7 @@ trait ApiPageCommentsCommentMutationTrait {
 		if ( !$row ) {
 			$this->dieWithError( 'pagecomments-api-error-comment-not-found', 'pagecomments-comment-not-found' );
 		}
-		if ( (int)$row->pct_namespace !== NS_MAIN ) {
-			$this->dieWithError( 'pagecomments-api-error-main-namespace-only', 'pagecomments-main-namespace-only' );
-		}
+		$this->assertNamespaceEnabled( (int)$row->pct_namespace );
 		if ( !$isModerator && ( $userActorId <= 0 || $userActorId !== (int)$row->pcc_actor_id ) ) {
 			$this->dieWithError(
 				'pagecomments-api-error-permission-denied',
@@ -88,9 +86,7 @@ trait ApiPageCommentsCommentMutationTrait {
 		if ( !$row ) {
 			$this->dieWithError( 'pagecomments-api-error-comment-not-found', 'pagecomments-comment-not-found' );
 		}
-		if ( (int)$row->pct_namespace !== NS_MAIN ) {
-			$this->dieWithError( 'pagecomments-api-error-main-namespace-only', 'pagecomments-main-namespace-only' );
-		}
+		$this->assertNamespaceEnabled( (int)$row->pct_namespace );
 		if ( !$isModerator && ( $userActorId <= 0 || $userActorId !== (int)$row->pcc_actor_id ) ) {
 			$this->dieWithError(
 				'pagecomments-api-error-permission-denied',

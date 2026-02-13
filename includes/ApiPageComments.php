@@ -135,10 +135,10 @@ class ApiPageComments extends ApiBase {
 		}
 
 		$title = $this->getTitleFromPageId( $pageId );
-		$this->assertMainNamespace( $title );
+		$this->assertNamespaceEnabledForTitle( $title );
 
 		$anchor = $this->normalizeAnchor( $anchorJson );
-		$this->assertNoAnchorOverlap( $pageId, $anchor );
+		$this->assertNoAnchorOverlap( $pageId, (int)$title->getNamespace(), $anchor );
 		$normalizedBody = $this->normalizeBody( $body );
 		$user = $this->getUser();
 		$actorId = $user->getActorId();
@@ -158,7 +158,7 @@ class ApiPageComments extends ApiBase {
 			'pagecomments_thread',
 			[
 				'pct_page_id' => $pageId,
-				'pct_namespace' => NS_MAIN,
+				'pct_namespace' => (int)$title->getNamespace(),
 				'pct_rev_id' => (int)$title->getLatestRevID(),
 				'pct_anchor_json' => $anchorStored,
 				'pct_anchor_excerpt' => $anchor['exact'],
@@ -215,9 +215,7 @@ class ApiPageComments extends ApiBase {
 		if ( !$thread ) {
 			$this->dieWithError( 'pagecomments-api-error-thread-not-found', 'pagecomments-thread-not-found' );
 		}
-		if ( (int)$thread->pct_namespace !== NS_MAIN ) {
-			$this->dieWithError( 'pagecomments-api-error-main-namespace-only', 'pagecomments-main-namespace-only' );
-		}
+		$this->assertNamespaceEnabled( (int)$thread->pct_namespace );
 
 		if ( $parentCommentId !== null ) {
 			$parentRow = $dbw->newSelectQueryBuilder()
@@ -275,7 +273,7 @@ class ApiPageComments extends ApiBase {
 
 		$dbw = MediaWikiServices::getInstance()->getConnectionProvider()->getPrimaryDatabase();
 		$thread = $dbw->newSelectQueryBuilder()
-			->select( [ 'pct_id' ] )
+			->select( [ 'pct_id', 'pct_namespace' ] )
 			->from( 'pagecomments_thread' )
 			->where( [ 'pct_id' => $threadId ] )
 			->caller( __METHOD__ )
@@ -283,6 +281,7 @@ class ApiPageComments extends ApiBase {
 		if ( !$thread ) {
 			$this->dieWithError( 'pagecomments-api-error-thread-not-found', 'pagecomments-thread-not-found' );
 		}
+		$this->assertNamespaceEnabled( (int)$thread->pct_namespace );
 
 		// Preserve list ordering: resolving/reopening should not bump thread recency.
 		$dbw->update(
@@ -323,13 +322,37 @@ class ApiPageComments extends ApiBase {
 		return $title;
 	}
 
-	private function assertMainNamespace( Title $title ): void {
-		if ( $title->getNamespace() !== NS_MAIN ) {
+	private function assertNamespaceEnabledForTitle( Title $title ): void {
+		$this->assertNamespaceEnabled( (int)$title->getNamespace() );
+	}
+
+	private function assertNamespaceEnabled( int $namespace ): void {
+		if ( !$this->isNamespaceEnabled( $namespace ) ) {
 			$this->dieWithError(
 				'pagecomments-api-error-main-namespace-only',
 				'pagecomments-main-namespace-only'
 			);
 		}
+	}
+
+	private function isNamespaceEnabled( int $namespace ): bool {
+		$enabledNamespaces = $this->getEnabledNamespaces();
+		return in_array( $namespace, $enabledNamespaces, true );
+	}
+
+	private function getEnabledNamespaces(): array {
+		$raw = MediaWikiServices::getInstance()
+			->getMainConfig()
+			->get( 'PageCommentsEnabledNamespaces' );
+		if ( !is_array( $raw ) ) {
+			return [];
+		}
+		$enabled = [];
+		foreach ( $raw as $value ) {
+			$namespace = (int)$value;
+			$enabled[$namespace] = true;
+		}
+		return array_keys( $enabled );
 	}
 
 	private function normalizeBody( string $body ): string {
@@ -390,7 +413,7 @@ class ApiPageComments extends ApiBase {
 		return $normalized;
 	}
 
-	private function assertNoAnchorOverlap( int $pageId, array $anchor ): void {
+	private function assertNoAnchorOverlap( int $pageId, int $namespace, array $anchor ): void {
 		$start = (int)$anchor['start'];
 		$end = (int)$anchor['end'];
 		$dbw = MediaWikiServices::getInstance()->getConnectionProvider()->getPrimaryDatabase();
@@ -399,7 +422,7 @@ class ApiPageComments extends ApiBase {
 			->from( 'pagecomments_thread' )
 			->where( [
 				'pct_page_id' => $pageId,
-				'pct_namespace' => NS_MAIN
+				'pct_namespace' => $namespace
 			] )
 			->caller( __METHOD__ )
 			->fetchResultSet();

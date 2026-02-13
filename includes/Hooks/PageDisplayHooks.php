@@ -9,7 +9,7 @@ use Skin;
 class PageDisplayHooks {
 
 	/**
-	 * Load PageComments client app on NS_MAIN page view.
+	 * Load PageComments client app on configured namespace page view.
 	 *
 	 * @param OutputPage $out
 	 * @param Skin $skin
