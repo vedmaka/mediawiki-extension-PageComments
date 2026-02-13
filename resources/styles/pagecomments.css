@@ -96,15 +96,18 @@
 	gap: 10px;
 }
 
-.pagecomments-composer {
+.pagecomments-floating-composer {
+	position: fixed;
+	z-index: 2100;
+	width: min( 360px, calc( 100vw - 16px ) );
 	padding: 12px;
 	border: 1px solid #d8deea;
 	border-radius: 8px;
 	background: #f7faff;
-	margin-bottom: 2px;
+	box-shadow: 0 10px 24px rgba( 23, 40, 68, 0.25 );
 }
 
-.pagecomments-composer h3 {
+.pagecomments-floating-composer h3 {
 	margin: 0 0 8px;
 	font-size: 15px;
 	line-height: 1.3;
@@ -495,6 +498,10 @@
 }
 
 @media ( max-width: 960px ) {
+	.pagecomments-floating-composer {
+		width: calc( 100vw - 16px );
+	}
+
 	.pagecomments-panel {
 		top: 0;
 		width: 100%;

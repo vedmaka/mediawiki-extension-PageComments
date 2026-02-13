@@ -8,6 +8,23 @@
 		>
 			{{ msg( 'pagecomments-ui-add-comment' ) }}
 		</button>
+		<div
+			v-if="pendingAnchor && canWrite"
+			ref="floatingComposer"
+			class="pagecomments-floating-composer"
+			:style="composerStyle"
+		>
+			<h3>{{ msg( 'pagecomments-ui-new-comment' ) }}</h3>
+			<p class="pagecomments-anchor-label">{{ msg( 'pagecomments-ui-selected-text' ) }}</p>
+			<blockquote class="pagecomments-anchor-preview">
+				{{ pendingAnchor.exact }}
+			</blockquote>
+			<textarea v-model="newThreadBody" class="pagecomments-textarea" rows="3"></textarea>
+			<div class="pagecomments-actions">
+				<button class="pagecomments-btn" @click="submitNewThread">{{ msg( 'pagecomments-ui-submit' ) }}</button>
+				<button class="pagecomments-btn pagecomments-btn-quiet" @click="cancelNewThread">{{ msg( 'pagecomments-ui-cancel' ) }}</button>
+			</div>
+		</div>
 		<aside class="pagecomments-panel" :class="{ 'is-open': isPanelOpen }">
 			<header class="pagecomments-panel-header">
 				<h2>{{ msg( 'pagecomments-ui-title' ) }}</h2>
@@ -23,18 +40,6 @@
 					{{ msg( 'pagecomments-ui-loading' ) }}
 				</div>
 				<div v-else>
-					<div v-if="pendingAnchor && canWrite" class="pagecomments-composer">
-						<h3>{{ msg( 'pagecomments-ui-new-comment' ) }}</h3>
-						<p class="pagecomments-anchor-label">{{ msg( 'pagecomments-ui-selected-text' ) }}</p>
-						<blockquote class="pagecomments-anchor-preview">
-							{{ pendingAnchor.exact }}
-						</blockquote>
-							<textarea v-model="newThreadBody" class="pagecomments-textarea" rows="3"></textarea>
-						<div class="pagecomments-actions">
-								<button class="pagecomments-btn" @click="submitNewThread">{{ msg( 'pagecomments-ui-submit' ) }}</button>
-								<button class="pagecomments-btn pagecomments-btn-quiet" @click="cancelNewThread">{{ msg( 'pagecomments-ui-cancel' ) }}</button>
-						</div>
-					</div>
 					<p v-if="errorMessage" class="pagecomments-error">
 						{{ errorMessage }}
 					</p>
@@ -148,6 +153,7 @@ module.exports = exports = {
 			selectedThreadId: null,
 			showAnchorButton: false,
 			anchorButtonStyle: { top: '0px', left: '0px' },
+			composerStyle: { top: '0px', left: '0px' },
 			capturedAnchor: null,
 			pendingAnchor: null,
 			newThreadBody: '',
@@ -182,6 +188,10 @@ module.exports = exports = {
 		},
 		onMouseUp( event ) {
 			if ( !this.canWrite ) {
+				return;
+			}
+			if ( this.pendingAnchor ) {
+				this.showAnchorButton = false;
 				return;
 			}
 			const targetElement = anchorUtil.getEventTargetElement( event );
@@ -236,7 +246,16 @@ module.exports = exports = {
 			this.pendingAnchor = this.capturedAnchor;
 			this.newThreadBody = '';
 			this.showAnchorButton = false;
-			this.isPanelOpen = true;
+			this.selectedThreadId = null;
+			highlight.updateSelectedHighlightClasses( null );
+			this.isPanelOpen = false;
+			const anchorLeft = parseFloat( this.anchorButtonStyle.left ) || 8;
+			const anchorTop = parseFloat( this.anchorButtonStyle.top ) || 8;
+			this.composerStyle = {
+				top: `${anchorTop + 34}px`,
+				left: `${anchorLeft}px`
+			};
+			this.$nextTick( () => this.positionFloatingComposer() );
 			const selection = window.getSelection();
 			if ( selection ) {
 				selection.removeAllRanges();
@@ -250,6 +269,25 @@ module.exports = exports = {
 		cancelNewThread() {
 			this.pendingAnchor = null;
 			this.newThreadBody = '';
+			this.capturedAnchor = null;
+		},
+		positionFloatingComposer() {
+			const node = this.$refs.floatingComposer;
+			if ( !node ) {
+				return;
+			}
+			// Keep the floating composer inside viewport bounds near the current selection.
+			const margin = 8;
+			const width = node.offsetWidth || 350;
+			const height = node.offsetHeight || 240;
+			let top = parseFloat( this.composerStyle.top ) || margin;
+			let left = parseFloat( this.composerStyle.left ) || margin;
+			left = Math.min( Math.max( margin, left ), window.innerWidth - width - margin );
+			top = Math.min( Math.max( margin, top ), window.innerHeight - height - margin );
+			this.composerStyle = {
+				top: `${top}px`,
+				left: `${left}px`
+			};
 		},
 		scheduleBackgroundSync() {
 			if ( this.syncTimer ) {
@@ -334,7 +372,11 @@ module.exports = exports = {
 				const threadId = Number( payload.threadId );
 				const commentId = Number( payload.commentId );
 				if ( !threadId || !commentId ) {
+					this.pendingAnchor = null;
+					this.newThreadBody = '';
+					this.capturedAnchor = null;
 					await this.fetchThreads();
+					this.isPanelOpen = true;
 					return;
 				}
 				const newThread = panelState.buildThreadFromCreateResult( {
@@ -348,10 +390,15 @@ module.exports = exports = {
 				this.threads.unshift( newThread );
 				this.collapsedThreads[threadId] = false;
 				this.selectedThreadId = threadId;
-				this.$nextTick( () => this.applyHighlights() );
+				this.isPanelOpen = true;
+				this.$nextTick( () => {
+					this.applyHighlights();
+					this.scrollToThreadInPanel( threadId, false );
+				} );
 				this.scheduleBackgroundSync();
 				this.pendingAnchor = null;
 				this.newThreadBody = '';
+				this.capturedAnchor = null;
 			} catch ( e ) {
 				this.errorMessage = this.msg( 'pagecomments-ui-error-generic' );
 			}
@@ -482,6 +529,9 @@ module.exports = exports = {
 		},
 		selectThread( threadId ) {
 			const panelWasOpen = this.isPanelOpen;
+			this.pendingAnchor = null;
+			this.newThreadBody = '';
+			this.capturedAnchor = null;
 			this.selectedThreadId = threadId;
 			this.isPanelOpen = true;
 			this.collapsedThreads[threadId] = false;
