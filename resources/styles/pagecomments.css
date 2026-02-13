@@ -125,7 +125,7 @@
 .pagecomments-thread-head {
 	display: flex;
 	justify-content: space-between;
-	align-items: baseline;
+	align-items: center;
 	font-size: 14px;
 	margin-bottom: 8px;
 	gap: 8px;
@@ -134,7 +134,7 @@
 .pagecomments-thread-head-main {
 	display: flex;
 	gap: 8px;
-	align-items: baseline;
+	align-items: center;
 }
 
 .pagecomments-thread-toggle {
@@ -162,14 +162,20 @@
 }
 
 .pagecomments-thread-state {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	text-transform: uppercase;
 	color: #202122;
-	font-size: 12px;
-	letter-spacing: 0.02em;
-	padding: 2px 7px;
-	border-radius: 10px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	padding: 0 10px;
+	min-height: 24px;
+	border-radius: 12px;
 	border: 1px solid transparent;
 	background: #f2f3f4;
+	line-height: 1;
 }
 
 .pagecomments-thread-state-toggle {
@@ -177,17 +183,19 @@
 	grid-template-areas: "badge";
 	align-items: center;
 	justify-items: center;
-	min-width: 74px;
-	padding: 2px 7px;
-	border-radius: 10px;
+	min-width: 84px;
+	min-height: 24px;
+	padding: 0 10px;
+	border-radius: 12px;
 	border: 1px solid transparent;
 	background: #f2f3f4;
 	color: #202122;
-	font-size: 12px;
-	letter-spacing: 0.02em;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	font-family: inherit;
-	line-height: 1.2;
+	line-height: 1;
 	cursor: pointer;
 	transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
@@ -195,13 +203,13 @@
 .pagecomments-thread-state-label,
 .pagecomments-thread-action-label {
 	grid-area: badge;
+	line-height: 1;
 	transition: opacity 100ms ease;
 }
 
 .pagecomments-thread-action-label {
 	opacity: 0;
 	pointer-events: none;
-	text-transform: none;
 }
 
 .pagecomments-thread-state-toggle:hover .pagecomments-thread-state-label,
