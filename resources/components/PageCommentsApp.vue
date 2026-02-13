@@ -48,6 +48,7 @@
 						v-for="thread in threads"
 						:key="thread.id"
 						class="pagecomments-thread"
+						:data-thread-id="thread.id"
 						:class="{
 							'is-selected': selectedThreadId === thread.id,
 							'is-open': thread.state === 'open',
@@ -476,17 +477,43 @@ module.exports = exports = {
 			}
 		},
 		selectThread( threadId ) {
+			const panelWasOpen = this.isPanelOpen;
 			this.selectedThreadId = threadId;
 			this.isPanelOpen = true;
 			this.collapsedThreads[threadId] = false;
 			highlight.updateSelectedHighlightClasses( this.selectedThreadId );
 			this.scrollToHighlight( threadId );
+			this.$nextTick( () => this.scrollToThreadInPanel( threadId, panelWasOpen ) );
 		},
 		scrollToHighlight( threadId ) {
 			const marker = document.querySelector( `.pagecomments-highlight[data-thread-id="${threadId}"]` );
 			if ( marker ) {
 				marker.scrollIntoView( { behavior: 'smooth', block: 'center' } );
 			}
+		},
+		scrollToThreadInPanel( threadId, panelWasOpen ) {
+			const doScroll = () => {
+				if ( !this.$el ) {
+					return;
+				}
+				const panelBody = this.$el.querySelector( '.pagecomments-panel-body' );
+				const threadNode = this.$el.querySelector(
+					`.pagecomments-thread[data-thread-id="${threadId}"]`
+				);
+				if ( !panelBody || !threadNode ) {
+					return;
+				}
+				const top = Math.max( 0, threadNode.offsetTop - panelBody.offsetTop - 8 );
+				panelBody.scrollTo( {
+					top,
+					behavior: 'smooth'
+				} );
+			};
+			if ( panelWasOpen ) {
+				doScroll();
+				return;
+			}
+			setTimeout( doScroll, 200 );
 		},
 		applyHighlights() {
 			threadView.applyHighlights(
