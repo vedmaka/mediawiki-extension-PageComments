@@ -730,6 +730,7 @@ module.exports = exports = {
 				const updated = panelState.setThreadState( this.threads, threadId, state );
 				if ( updated ) {
 					this.collapsedThreads[threadId] = state === 'resolved';
+					this.$nextTick( () => this.applyHighlights() );
 				} else {
 					await this.fetchThreads( false );
 				}
