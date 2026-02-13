@@ -1,8 +1,13 @@
 # PageComments
 
-Inline page comments for MediaWiki pages in configured namespaces.
+Inline page comments for MediaWiki.
 
-Features:
+# Requirements
+
+* MediaWiki 1.43+
+
+# Features
+
 - Logged-in users can create comment threads from selected text.
 - Users can reply inside threads.
 - Users can delete their own comments (or any comment with `pagecomments-moderate`).
@@ -52,4 +57,4 @@ Action API: `action=pagecomments`
 - No realtime syncing between users.
 - Panel uses optimistic updates with a short background re-sync.
 - Overlapping highlighted ranges are skipped to keep markup stable.
-- If page content changes, some threads can become orphaned.
+- If page content changes, some threads can become orphaned (displayed at the Comments panel as orphaned).
