@@ -58,7 +58,18 @@
 						<div class="pagecomments-thread-head">
 							<div class="pagecomments-thread-head-main">
 								<strong>{{ thread.actorName }}</strong>
-								<span class="pagecomments-thread-state">{{ thread.state }}</span>
+								<button
+									v-if="canWrite"
+									class="pagecomments-thread-state-toggle"
+									:title="thread.state === 'open' ? msg( 'pagecomments-ui-resolve' ) : msg( 'pagecomments-ui-reopen' )"
+									@click.stop="setThreadState( thread.id, thread.state === 'open' ? 'resolved' : 'open' )"
+								>
+									<span class="pagecomments-thread-state-label">{{ thread.state }}</span>
+									<span class="pagecomments-thread-action-label">
+										{{ thread.state === 'open' ? msg( 'pagecomments-ui-resolve' ) : msg( 'pagecomments-ui-reopen' ) }}
+									</span>
+								</button>
+								<span v-else class="pagecomments-thread-state">{{ thread.state }}</span>
 							</div>
 							<button
 								class="pagecomments-thread-toggle"
@@ -92,20 +103,6 @@
 									@click.stop="toggleReply( thread.id )"
 								>
 									{{ msg( 'pagecomments-ui-reply' ) }}
-								</button>
-								<button
-									v-if="canWrite && thread.state === 'open'"
-									class="pagecomments-btn pagecomments-btn-quiet"
-									@click.stop="setThreadState( thread.id, 'resolved' )"
-								>
-									{{ msg( 'pagecomments-ui-resolve' ) }}
-								</button>
-								<button
-									v-if="canWrite && thread.state === 'resolved'"
-									class="pagecomments-btn pagecomments-btn-quiet"
-									@click.stop="setThreadState( thread.id, 'open' )"
-								>
-									{{ msg( 'pagecomments-ui-reopen' ) }}
 								</button>
 							</div>
 							<div v-if="replyOpen[thread.id]" class="pagecomments-reply">

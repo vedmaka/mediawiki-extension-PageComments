@@ -173,16 +173,74 @@
 	background: #f2f3f4;
 }
 
-.pagecomments-thread.is-open .pagecomments-thread-state {
+.pagecomments-thread-state-toggle {
+	display: inline-grid;
+	grid-template-areas: "badge";
+	align-items: center;
+	justify-items: center;
+	min-width: 74px;
+	padding: 2px 7px;
+	border-radius: 10px;
+	border: 1px solid transparent;
+	background: #f2f3f4;
+	color: #202122;
+	font-size: 12px;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	font-family: inherit;
+	line-height: 1.2;
+	cursor: pointer;
+	transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.pagecomments-thread-state-label,
+.pagecomments-thread-action-label {
+	grid-area: badge;
+	transition: opacity 100ms ease;
+}
+
+.pagecomments-thread-action-label {
+	opacity: 0;
+	pointer-events: none;
+	text-transform: none;
+}
+
+.pagecomments-thread-state-toggle:hover .pagecomments-thread-state-label,
+.pagecomments-thread-state-toggle:focus-visible .pagecomments-thread-state-label {
+	opacity: 0;
+}
+
+.pagecomments-thread-state-toggle:hover .pagecomments-thread-action-label,
+.pagecomments-thread-state-toggle:focus-visible .pagecomments-thread-action-label {
+	opacity: 1;
+}
+
+.pagecomments-thread.is-open .pagecomments-thread-state,
+.pagecomments-thread.is-open .pagecomments-thread-state-toggle {
 	background: #d9ebff;
 	border-color: #4a79be;
 	color: #1f3f7a;
 }
 
-.pagecomments-thread.is-resolved .pagecomments-thread-state {
+.pagecomments-thread.is-open .pagecomments-thread-state-toggle:hover,
+.pagecomments-thread.is-open .pagecomments-thread-state-toggle:focus-visible {
+	background: #4a79be;
+	border-color: #3d659f;
+	color: #fff;
+}
+
+.pagecomments-thread.is-resolved .pagecomments-thread-state,
+.pagecomments-thread.is-resolved .pagecomments-thread-state-toggle {
 	background: #dcf6de;
 	border-color: #4c8f59;
 	color: #21592c;
+}
+
+.pagecomments-thread.is-resolved .pagecomments-thread-state-toggle:hover,
+.pagecomments-thread.is-resolved .pagecomments-thread-state-toggle:focus-visible {
+	background: #4c8f59;
+	border-color: #3d7747;
+	color: #fff;
 }
 
 .pagecomments-anchor-label {
