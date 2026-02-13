@@ -1,7 +1,14 @@
 const anchorUtil = require( './anchor.js' );
 const highlight = require( './highlight.js' );
 
-function applyHighlights( threads, selectedThreadId, onThreadClick, onThreadHover, onThreadLeave ) {
+function applyHighlights(
+	threads,
+	selectedThreadId,
+	hideResolvedHighlights,
+	onThreadClick,
+	onThreadHover,
+	onThreadLeave
+) {
 	const root = anchorUtil.getArticleRoot();
 	if ( !root ) {
 		return;
@@ -12,7 +19,13 @@ function applyHighlights( threads, selectedThreadId, onThreadClick, onThreadHove
 		return;
 	}
 	const matches = [];
+	const intentionallyHidden = new Set();
 	for ( const thread of threads ) {
+		if ( hideResolvedHighlights && thread.state === 'resolved' ) {
+			thread.orphaned = false;
+			intentionallyHidden.add( thread.id );
+			continue;
+		}
 		const exact = thread.anchor && thread.anchor.exact ? thread.anchor.exact : '';
 		if ( !exact ) {
 			thread.orphaned = true;
@@ -40,6 +53,9 @@ function applyHighlights( threads, selectedThreadId, onThreadClick, onThreadHove
 	);
 	const appliedIds = new Set( applied.map( ( item ) => item.threadId ) );
 	for ( const thread of threads ) {
+		if ( intentionallyHidden.has( thread.id ) ) {
+			continue;
+		}
 		if ( !appliedIds.has( thread.id ) ) {
 			thread.orphaned = true;
 		}

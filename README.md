@@ -2,12 +2,11 @@
 
 Inline page comments for MediaWiki main namespace pages.
 
-MVP features:
+Features:
 - Logged-in users can create comment threads from selected text.
 - Users can reply inside threads.
 - Users can delete their own comments (or any comment with `pagecomments-moderate`).
 - Users can resolve/reopen threads.
-- Client UI shown on `NS_MAIN` view pages.
 - Per-user unseen tracking in `localStorage` with blue-dot indicators in text highlights and thread cards (own comments are ignored).
 
 ## Install
@@ -34,6 +33,7 @@ php maintenance/run.php update
 - `$wgPageCommentsEnabledNamespaces` default `[ 0 ]`
 - `$wgPageCommentsMaxCommentLength` default `2000`
 - `$wgPageCommentsMaxAnchorLength` default `600`
+- `$wgPageCommentsHideResolvedHighlights` default `false` (when `true`, resolved threads are not highlighted in page text)
 
 ## API module
 

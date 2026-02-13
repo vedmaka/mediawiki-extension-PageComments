@@ -110,6 +110,10 @@
 		"PageCommentsMaxAnchorLength": {
 			"value": 600,
 			"description": "Maximum number of characters in captured selection text."
+		},
+		"PageCommentsHideResolvedHighlights": {
+			"value": false,
+			"description": "When true, resolved threads are not highlighted in page text."
 		}
 	},
 	"manifest_version": 2

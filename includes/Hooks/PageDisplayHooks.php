@@ -41,6 +41,7 @@ class PageDisplayHooks {
 			'revId' => (int)$title->getLatestRevID(),
 			'namespace' => (int)$title->getNamespace(),
 			'userActorId' => (int)$user->getActorId(),
+			'hideResolvedHighlights' => (bool)$config->get( 'PageCommentsHideResolvedHighlights' ),
 			'canWrite' => $canWrite,
 		] );
 	}

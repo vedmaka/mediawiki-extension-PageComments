@@ -163,6 +163,7 @@ module.exports = exports = {
 			pageId: Number( config.pageId ) || 0,
 			currentUserActorId: Number( config.userActorId ) || 0,
 			currentUserName: String( mw.config.get( 'wgUserName' ) || '' ),
+			hideResolvedHighlights: !!config.hideResolvedHighlights,
 			canWrite: !!config.canWrite,
 			threads: [],
 			loading: true,
@@ -827,6 +828,7 @@ module.exports = exports = {
 			threadView.applyHighlights(
 				this.threads,
 				this.selectedThreadId,
+				this.hideResolvedHighlights,
 				( threadId ) => this.selectThread( threadId ),
 				( threadId, sourceElement ) => this.onThreadHighlightHover( threadId, sourceElement ),
 				() => this.onThreadHighlightLeave()
