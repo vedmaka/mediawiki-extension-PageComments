@@ -161,6 +161,8 @@ module.exports = exports = {
 		const config = mw.config.get( 'wgPageComments' ) || {};
 		return {
 			pageId: Number( config.pageId ) || 0,
+			currentUserActorId: Number( config.userActorId ) || 0,
+			currentUserName: String( mw.config.get( 'wgUserName' ) || '' ),
 			canWrite: !!config.canWrite,
 			threads: [],
 			loading: true,
@@ -270,12 +272,42 @@ module.exports = exports = {
 			}
 			return maxId;
 		},
+		isOwnComment( comment ) {
+			if ( !comment ) {
+				return false;
+			}
+			const actorId = Number( comment.actorId );
+			if ( this.currentUserActorId > 0 && Number.isInteger( actorId ) && actorId > 0 ) {
+				return actorId === this.currentUserActorId;
+			}
+			const actorName = String( comment.actorName || '' );
+			if ( !actorName || !this.currentUserName ) {
+				return false;
+			}
+			return actorName === this.currentUserName;
+		},
+		getLatestThreadExternalCommentId( thread ) {
+			if ( !thread || !thread.comments || !thread.comments.length ) {
+				return 0;
+			}
+			let maxId = 0;
+			for ( const comment of thread.comments ) {
+				if ( this.isOwnComment( comment ) ) {
+					continue;
+				}
+				const id = Number( comment.id );
+				if ( Number.isInteger( id ) && id > maxId ) {
+					maxId = id;
+				}
+			}
+			return maxId;
+		},
 		isThreadUnseen( threadId ) {
 			const thread = this.threads.find( ( item ) => item.id === threadId );
 			if ( !thread ) {
 				return false;
 			}
-			const latestCommentId = this.getLatestThreadCommentId( thread );
+			const latestCommentId = this.getLatestThreadExternalCommentId( thread );
 			if ( latestCommentId <= 0 ) {
 				return false;
 			}

@@ -91,6 +91,7 @@ trait ApiPageCommentsListTrait {
 					'parentCommentId' => $row->pcc_parent_comment_id !== null ?
 						(int)$row->pcc_parent_comment_id :
 						null,
+					'actorId' => (int)$row->pcc_actor_id,
 					'body' => (string)$row->pcc_body,
 					'createdAt' => (string)$row->pcc_created_at,
 					'actorName' => (string)$row->comment_actor_name,

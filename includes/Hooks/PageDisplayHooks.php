@@ -40,6 +40,7 @@ class PageDisplayHooks {
 			'pageId' => (int)$title->getArticleID(),
 			'revId' => (int)$title->getLatestRevID(),
 			'namespace' => (int)$title->getNamespace(),
+			'userActorId' => (int)$user->getActorId(),
 			'canWrite' => $canWrite,
 		] );
 	}

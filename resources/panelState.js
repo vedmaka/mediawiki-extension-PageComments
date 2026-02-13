@@ -2,6 +2,12 @@ function getCurrentUserName() {
 	return mw.config.get( 'wgUserName' ) || 'User';
 }
 
+function getCurrentUserActorId() {
+	const config = mw.config.get( 'wgPageComments' ) || {};
+	const actorId = Number( config.userActorId );
+	return Number.isInteger( actorId ) && actorId > 0 ? actorId : 0;
+}
+
 function getNowTimestamp() {
 	const now = new Date();
 	const pad = ( n ) => String( n ).padStart( 2, '0' );
@@ -12,11 +18,12 @@ function findThreadIndex( threads, threadId ) {
 	return threads.findIndex( ( thread ) => thread.id === threadId );
 }
 
-function buildOptimisticComment( threadId, commentId, body, timestamp, actorName ) {
+function buildOptimisticComment( threadId, commentId, body, timestamp, actorName, actorId ) {
 	return {
 		id: commentId,
 		threadId,
 		parentCommentId: null,
+		actorId,
 		body,
 		createdAt: timestamp,
 		actorName,
@@ -37,6 +44,7 @@ function buildThreadFromCreateResult( options ) {
 	} = options;
 	const timestamp = getNowTimestamp();
 	const actorName = getCurrentUserName();
+	const actorId = getCurrentUserActorId();
 	return {
 		id: threadId,
 		pageId,
@@ -48,7 +56,7 @@ function buildThreadFromCreateResult( options ) {
 		anchor: pendingAnchor,
 		excerpt: pendingAnchor.exact,
 		orphaned: false,
-		comments: [ buildOptimisticComment( threadId, commentId, body, timestamp, actorName ) ]
+		comments: [ buildOptimisticComment( threadId, commentId, body, timestamp, actorName, actorId ) ]
 	};
 }
 
@@ -59,7 +67,15 @@ function appendReply( threads, threadId, commentId, body ) {
 	}
 	const timestamp = getNowTimestamp();
 	const actorName = getCurrentUserName();
-	threads[index].comments.push( buildOptimisticComment( threadId, commentId, body, timestamp, actorName ) );
+	const actorId = getCurrentUserActorId();
+	threads[index].comments.push( buildOptimisticComment(
+		threadId,
+		commentId,
+		body,
+		timestamp,
+		actorName,
+		actorId
+	) );
 	threads[index].updatedAt = timestamp;
 	return true;
 }
