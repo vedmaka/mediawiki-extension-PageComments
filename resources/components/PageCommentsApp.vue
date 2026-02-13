@@ -239,6 +239,8 @@ module.exports = exports = {
 		},
 		closePanel() {
 			this.isPanelOpen = false;
+			this.selectedThreadId = null;
+			highlight.updateSelectedHighlightClasses( null );
 		},
 		cancelNewThread() {
 			this.pendingAnchor = null;
