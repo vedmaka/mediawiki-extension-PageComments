@@ -161,7 +161,8 @@ module.exports = exports = {
 			replyBody: {},
 			isPanelOpen: false,
 			syncTimer: null,
-			collapsedThreads: {}
+			collapsedThreads: {},
+			lastHighlightSignature: ''
 		};
 	},
 	mounted() {
@@ -569,12 +570,30 @@ module.exports = exports = {
 			}
 			setTimeout( doScroll, 200 );
 		},
+		buildHighlightSignature() {
+			return this.threads.map( ( thread ) => {
+				const anchor = thread.anchor || {};
+				return [
+					thread.id,
+					thread.state || 'open',
+					anchor.start !== undefined ? anchor.start : '',
+					anchor.end !== undefined ? anchor.end : '',
+					anchor.exact || ''
+				].join( '|' );
+			} ).join( '||' );
+		},
 		applyHighlights() {
+			const nextSignature = this.buildHighlightSignature();
+			if ( nextSignature === this.lastHighlightSignature ) {
+				highlight.updateSelectedHighlightClasses( this.selectedThreadId );
+				return;
+			}
 			threadView.applyHighlights(
 				this.threads,
 				this.selectedThreadId,
 				( threadId ) => this.selectThread( threadId )
 			);
+			this.lastHighlightSignature = nextSignature;
 		}
 	}
 };
