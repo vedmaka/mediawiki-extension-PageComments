@@ -90,7 +90,7 @@
 							<blockquote class="pagecomments-anchor-preview">
 								{{ thread.excerpt }}
 							</blockquote>
-							<p v-if="thread.orphaned" class="pagecomments-note pagecomments-note-orphaned">
+							<p v-if="thread.orphaned && thread.state !== 'resolved'" class="pagecomments-note pagecomments-note-orphaned">
 								{{ msg( 'pagecomments-ui-orphaned' ) }}
 							</p>
 							<template v-if="!isThreadCollapsed( thread.id )">
