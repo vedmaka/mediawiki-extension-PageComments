@@ -129,6 +129,61 @@ class ApiPageCommentsNamespaceConfigTest extends ApiTestCase {
 	}
 
 	/**
+	 * Edit/delete operations require pagecomments-write right.
+	 */
+	public function testEditDeleteRejectedWithoutWriteRight(): void {
+		$pageId = $this->getPageIdInNamespace( NS_PROJECT );
+		$testUser = $this->getTestUser();
+		$author = $testUser->getAuthority();
+
+		[ $createResult ] = $this->doApiRequestWithToken( [
+			'action' => 'pagecomments',
+			'pcaction' => 'create',
+			'pageid' => $pageId,
+			'anchor' => $this->buildAnchorJson(),
+			'body' => 'Root comment',
+		], null, $author, 'csrf' );
+
+		$commentId = (int)$createResult['pagecomments']['commentId'];
+		$this->overrideUserPermissions( $testUser->getUser(), [ 'pagecomments-read' ] );
+
+		$this->expectApiErrorCode( 'pagecomments-permission-denied' );
+		$this->doApiRequestWithToken( [
+			'action' => 'pagecomments',
+			'pcaction' => 'editcomment',
+			'commentid' => $commentId,
+			'body' => 'Edited without write right',
+		], null, $author, 'csrf' );
+	}
+
+	/**
+	 * Delete operation requires pagecomments-write right.
+	 */
+	public function testDeleteRejectedWithoutWriteRight(): void {
+		$pageId = $this->getPageIdInNamespace( NS_PROJECT );
+		$testUser = $this->getTestUser();
+		$author = $testUser->getAuthority();
+
+		[ $createResult ] = $this->doApiRequestWithToken( [
+			'action' => 'pagecomments',
+			'pcaction' => 'create',
+			'pageid' => $pageId,
+			'anchor' => $this->buildAnchorJson(),
+			'body' => 'Root comment',
+		], null, $author, 'csrf' );
+
+		$commentId = (int)$createResult['pagecomments']['commentId'];
+		$this->overrideUserPermissions( $testUser->getUser(), [ 'pagecomments-read' ] );
+
+		$this->expectApiErrorCode( 'pagecomments-permission-denied' );
+		$this->doApiRequestWithToken( [
+			'action' => 'pagecomments',
+			'pcaction' => 'deletecomment',
+			'commentid' => $commentId,
+		], null, $author, 'csrf' );
+	}
+
+	/**
 	 * Reply/edit/resolve/delete mutations work end-to-end in an enabled namespace.
 	 */
 	public function testMutationsWorkInEnabledNamespace(): void {

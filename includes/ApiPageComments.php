@@ -33,11 +33,13 @@ class ApiPageComments extends ApiBase {
 		}
 
 		if ( $action === self::ACTION_DELETE_COMMENT ) {
+			$this->assertCanModifyComment();
 			$this->runDeleteComment( (int)$params['commentid'] );
 			return;
 		}
 
 		if ( $action === self::ACTION_EDIT_COMMENT ) {
+			$this->assertCanModifyComment();
 			$this->runEditComment( (int)$params['commentid'], (string)$params['body'] );
 			return;
 		}
@@ -216,6 +218,7 @@ class ApiPageComments extends ApiBase {
 		if ( !$thread ) {
 			$this->dieWithError( 'pagecomments-api-error-thread-not-found', 'pagecomments-thread-not-found' );
 		}
+		$this->getTitleFromPageId( (int)$thread->pct_page_id );
 		$this->assertNamespaceEnabled( (int)$thread->pct_namespace );
 
 		if ( $parentCommentId !== null ) {
@@ -274,7 +277,7 @@ class ApiPageComments extends ApiBase {
 
 		$dbw = MediaWikiServices::getInstance()->getConnectionProvider()->getPrimaryDatabase();
 		$thread = $dbw->newSelectQueryBuilder()
-			->select( [ 'pct_id', 'pct_namespace' ] )
+			->select( [ 'pct_id', 'pct_page_id', 'pct_namespace' ] )
 			->from( 'pagecomments_thread' )
 			->where( [ 'pct_id' => $threadId ] )
 			->caller( __METHOD__ )
@@ -282,6 +285,7 @@ class ApiPageComments extends ApiBase {
 		if ( !$thread ) {
 			$this->dieWithError( 'pagecomments-api-error-thread-not-found', 'pagecomments-thread-not-found' );
 		}
+		$this->getTitleFromPageId( (int)$thread->pct_page_id );
 		$this->assertNamespaceEnabled( (int)$thread->pct_namespace );
 
 		// Preserve list ordering: resolving/reopening should not bump thread recency.
@@ -317,6 +321,27 @@ class ApiPageComments extends ApiBase {
 		);
 	}
 
+	private function assertCanModifyComment(): void {
+		$user = $this->getUser();
+		if ( !$user->isNamed() ) {
+			$this->dieWithError( 'apierror-mustbeloggedin-generic', 'notloggedin' );
+		}
+
+		$this->assertCanRead();
+		$permissionManager = MediaWikiServices::getInstance()->getPermissionManager();
+		if (
+			$permissionManager->userHasRight( $user, 'pagecomments-write' ) ||
+			$permissionManager->userHasRight( $user, 'pagecomments-moderate' )
+		) {
+			return;
+		}
+
+		$this->dieWithError(
+			'pagecomments-api-error-permission-denied',
+			'pagecomments-permission-denied'
+		);
+	}
+
 	private function assertCanRead(): void {
 		$user = $this->getUser();
 		$permissionManager = MediaWikiServices::getInstance()->getPermissionManager();
@@ -338,6 +363,13 @@ class ApiPageComments extends ApiBase {
 		$title = $this->requireTitleInstance( $title );
 		if ( !$title->exists() ) {
 			$this->dieWithError( 'pagecomments-api-error-invalid-page', 'pagecomments-invalid-page' );
+		}
+		$permissionManager = MediaWikiServices::getInstance()->getPermissionManager();
+		if ( !$permissionManager->userCan( 'read', $this->getUser(), $title ) ) {
+			$this->dieWithError(
+				'pagecomments-api-error-permission-denied',
+				'pagecomments-permission-denied'
+			);
 		}
 		return $title;
 	}

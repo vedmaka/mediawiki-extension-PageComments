@@ -9,6 +9,7 @@ use MediaWiki\MediaWikiServices;
  * @method string normalizeBody( string $body )
  * @method \MediaWiki\User\User getUser()
  * @method void assertNamespaceEnabled( int $namespace )
+ * @method \MediaWiki\Title\Title getTitleFromPageId( int $pageId )
  * @method \MediaWiki\Api\ApiResult getResult()
  */
 trait ApiPageCommentsCommentMutationTrait {
@@ -28,7 +29,7 @@ trait ApiPageCommentsCommentMutationTrait {
 			->userHasRight( $user, 'pagecomments-moderate' );
 		$dbw = MediaWikiServices::getInstance()->getConnectionProvider()->getPrimaryDatabase();
 		$row = $dbw->newSelectQueryBuilder()
-			->select( [ 'pcc_id', 'pcc_thread_id', 'pcc_actor_id', 'pct_namespace' ] )
+			->select( [ 'pcc_id', 'pcc_thread_id', 'pcc_actor_id', 'pct_page_id', 'pct_namespace' ] )
 			->from( 'pagecomments_comment' )
 			->join( 'pagecomments_thread', null, 'pct_id = pcc_thread_id' )
 			->where( [
@@ -40,6 +41,7 @@ trait ApiPageCommentsCommentMutationTrait {
 		if ( !$row ) {
 			$this->dieWithError( 'pagecomments-api-error-comment-not-found', 'pagecomments-comment-not-found' );
 		}
+		$this->getTitleFromPageId( (int)$row->pct_page_id );
 		$this->assertNamespaceEnabled( (int)$row->pct_namespace );
 		if ( !$isModerator && ( $userActorId <= 0 || $userActorId !== (int)$row->pcc_actor_id ) ) {
 			$this->dieWithError(
@@ -81,7 +83,7 @@ trait ApiPageCommentsCommentMutationTrait {
 			->userHasRight( $user, 'pagecomments-moderate' );
 		$dbw = MediaWikiServices::getInstance()->getConnectionProvider()->getPrimaryDatabase();
 		$row = $dbw->newSelectQueryBuilder()
-			->select( [ 'pcc_id', 'pcc_thread_id', 'pcc_actor_id', 'pct_namespace' ] )
+			->select( [ 'pcc_id', 'pcc_thread_id', 'pcc_actor_id', 'pct_page_id', 'pct_namespace' ] )
 			->from( 'pagecomments_comment' )
 			->join( 'pagecomments_thread', null, 'pct_id = pcc_thread_id' )
 			->where( [
@@ -93,6 +95,7 @@ trait ApiPageCommentsCommentMutationTrait {
 		if ( !$row ) {
 			$this->dieWithError( 'pagecomments-api-error-comment-not-found', 'pagecomments-comment-not-found' );
 		}
+		$this->getTitleFromPageId( (int)$row->pct_page_id );
 		$this->assertNamespaceEnabled( (int)$row->pct_namespace );
 		if ( !$isModerator && ( $userActorId <= 0 || $userActorId !== (int)$row->pcc_actor_id ) ) {
 			$this->dieWithError(
