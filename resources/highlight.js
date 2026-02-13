@@ -91,7 +91,7 @@ function applyMatchesToDom( map, matches, onThreadClick, onThreadHover, onThread
 			const stateClass = segment.state === 'resolved' ?
 				'pagecomments-highlight-resolved' :
 				'pagecomments-highlight-open';
-			wrapper.className = `pagecomments-highlight ${stateClass}`;
+			wrapper.className = 'pagecomments-highlight ' + stateClass;
 			wrapper.dataset.threadId = String( segment.threadId );
 			wrapper.dataset.state = segment.state;
 			wrapper.textContent = value.slice( segment.start, segment.end );

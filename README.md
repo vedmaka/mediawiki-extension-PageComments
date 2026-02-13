@@ -54,6 +54,14 @@ Action API: `action=pagecomments`
 
 ## Static analysis
 
+- Run PHPCS from extension root:
+
+```bash
+composer phpcs
+```
+
+The command pins `--standard=MediaWiki` so it works in both standalone checkouts and nested core trees.
+
 - Run Phan from the extension root:
 
 ```bash

@@ -5,7 +5,7 @@ namespace MediaWiki\Extension\PageComments;
 use MediaWiki\MediaWikiServices;
 
 /**
- * @method never dieWithError( \Wikimedia\Message\MessageSpecifier|array|string $msg, ?string $code = null, ?array $data = null, int $httpCode = 0 )
+ * @method never dieWithError( $msg, ?string $code = null, ?array $data = null, int $httpCode = 0 )
  * @method string normalizeBody( string $body )
  * @method \MediaWiki\User\User getUser()
  * @method void assertNamespaceEnabled( int $namespace )
