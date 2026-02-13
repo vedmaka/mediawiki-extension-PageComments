@@ -4,6 +4,13 @@ namespace MediaWiki\Extension\PageComments;
 
 use MediaWiki\MediaWikiServices;
 
+/**
+ * @method never dieWithError( \Wikimedia\Message\MessageSpecifier|array|string $msg, ?string $code = null, ?array $data = null, int $httpCode = 0 )
+ * @method \MediaWiki\Title\Title getTitleFromPageId( int $pageId )
+ * @method void assertNamespaceEnabledForTitle( \MediaWiki\Title\Title $title )
+ * @method \MediaWiki\User\User getUser()
+ * @method \MediaWiki\Api\ApiResult getResult()
+ */
 trait ApiPageCommentsListTrait {
 
 	private function runList( int $pageId ): void {
@@ -12,10 +19,10 @@ trait ApiPageCommentsListTrait {
 		}
 		$title = $this->getTitleFromPageId( $pageId );
 		$this->assertNamespaceEnabledForTitle( $title );
-		$namespace = (int)$title->getNamespace();
+		$namespace = $title->getNamespace();
 		$dbr = MediaWikiServices::getInstance()->getConnectionProvider()->getReplicaDatabase();
 		$user = $this->getUser();
-		$userActorId = (int)$user->getActorId();
+		$userActorId = $user->getActorId();
 		$isModerator = MediaWikiServices::getInstance()
 			->getPermissionManager()
 			->userHasRight( $user, 'pagecomments-moderate' );

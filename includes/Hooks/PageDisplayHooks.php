@@ -39,8 +39,8 @@ class PageDisplayHooks {
 		$out->addJsConfigVars( 'wgPageComments', [
 			'pageId' => (int)$title->getArticleID(),
 			'revId' => (int)$title->getLatestRevID(),
-			'namespace' => (int)$title->getNamespace(),
-			'userActorId' => (int)$user->getActorId(),
+			'namespace' => $title->getNamespace(),
+			'userActorId' => $user->getActorId(),
 			'hideResolvedHighlights' => (bool)$config->get( 'PageCommentsHideResolvedHighlights' ),
 			'canWrite' => $canWrite,
 		] );

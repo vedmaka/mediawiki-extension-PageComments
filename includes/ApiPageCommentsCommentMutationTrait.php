@@ -4,6 +4,13 @@ namespace MediaWiki\Extension\PageComments;
 
 use MediaWiki\MediaWikiServices;
 
+/**
+ * @method never dieWithError( \Wikimedia\Message\MessageSpecifier|array|string $msg, ?string $code = null, ?array $data = null, int $httpCode = 0 )
+ * @method string normalizeBody( string $body )
+ * @method \MediaWiki\User\User getUser()
+ * @method void assertNamespaceEnabled( int $namespace )
+ * @method \MediaWiki\Api\ApiResult getResult()
+ */
 trait ApiPageCommentsCommentMutationTrait {
 
 	private function runEditComment( int $commentId, string $body ): void {
@@ -15,7 +22,7 @@ trait ApiPageCommentsCommentMutationTrait {
 		if ( !$user->isNamed() ) {
 			$this->dieWithError( 'apierror-mustbeloggedin-generic', 'notloggedin' );
 		}
-		$userActorId = (int)$user->getActorId();
+		$userActorId = $user->getActorId();
 		$isModerator = MediaWikiServices::getInstance()
 			->getPermissionManager()
 			->userHasRight( $user, 'pagecomments-moderate' );
@@ -54,7 +61,7 @@ trait ApiPageCommentsCommentMutationTrait {
 		// Keep thread ordering stable: editing comment text should not bump thread recency.
 		$dbw->endAtomic( __METHOD__ );
 		$this->getResult()->addValue( null, 'pagecomments', [
-			'action' => self::ACTION_EDIT_COMMENT,
+			'action' => 'editcomment',
 			'commentId' => $commentId,
 			'threadId' => $threadId,
 		] );
@@ -68,7 +75,7 @@ trait ApiPageCommentsCommentMutationTrait {
 		if ( !$user->isNamed() ) {
 			$this->dieWithError( 'apierror-mustbeloggedin-generic', 'notloggedin' );
 		}
-		$userActorId = (int)$user->getActorId();
+		$userActorId = $user->getActorId();
 		$isModerator = MediaWikiServices::getInstance()
 			->getPermissionManager()
 			->userHasRight( $user, 'pagecomments-moderate' );
@@ -129,7 +136,7 @@ trait ApiPageCommentsCommentMutationTrait {
 		}
 		$dbw->endAtomic( __METHOD__ );
 		$this->getResult()->addValue( null, 'pagecomments', [
-			'action' => self::ACTION_DELETE_COMMENT,
+			'action' => 'deletecomment',
 			'commentId' => $commentId,
 			'threadId' => $threadId,
 			'threadDeleted' => $threadDeleted,

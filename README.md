@@ -52,6 +52,16 @@ Action API: `action=pagecomments`
 - `pcaction=resolve&threadid=<id>&token=<csrf>`
 - `pcaction=reopen&threadid=<id>&token=<csrf>`
 
+## Static analysis
+
+- Run Phan from the extension root:
+
+```bash
+composer phan
+```
+
+- Phan config is in `.phan/config.php` (supports both standalone extension checkout and core checkout).
+
 ## Known limits
 
 - No realtime syncing between users.

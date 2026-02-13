@@ -138,7 +138,7 @@ class ApiPageComments extends ApiBase {
 		$this->assertNamespaceEnabledForTitle( $title );
 
 		$anchor = $this->normalizeAnchor( $anchorJson );
-		$this->assertNoAnchorOverlap( $pageId, (int)$title->getNamespace(), $anchor );
+		$this->assertNoAnchorOverlap( $pageId, $title->getNamespace(), $anchor );
 		$normalizedBody = $this->normalizeBody( $body );
 		$user = $this->getUser();
 		$actorId = $user->getActorId();
@@ -158,7 +158,7 @@ class ApiPageComments extends ApiBase {
 			'pagecomments_thread',
 			[
 				'pct_page_id' => $pageId,
-				'pct_namespace' => (int)$title->getNamespace(),
+				'pct_namespace' => $title->getNamespace(),
 				'pct_rev_id' => (int)$title->getLatestRevID(),
 				'pct_anchor_json' => $anchorStored,
 				'pct_anchor_excerpt' => $anchor['exact'],
@@ -315,15 +315,26 @@ class ApiPageComments extends ApiBase {
 
 	private function getTitleFromPageId( int $pageId ): Title {
 		$title = Title::newFromID( $pageId );
-		if ( !$title || !$title->exists() ) {
+		if ( !( $title instanceof Title ) ) {
 			$this->dieWithError( 'pagecomments-api-error-invalid-page', 'pagecomments-invalid-page' );
 		}
+		$title = $this->requireTitleInstance( $title );
+		if ( !$title->exists() ) {
+			$this->dieWithError( 'pagecomments-api-error-invalid-page', 'pagecomments-invalid-page' );
+		}
+		return $title;
+	}
 
+	private function requireTitleInstance( ?Title $title ): Title {
+		if ( !$title ) {
+			// Defensive fallback for static analysis; runtime should exit via dieWithError above.
+			throw new \LogicException( 'Expected Title instance for valid page id' );
+		}
 		return $title;
 	}
 
 	private function assertNamespaceEnabledForTitle( Title $title ): void {
-		$this->assertNamespaceEnabled( (int)$title->getNamespace() );
+		$this->assertNamespaceEnabled( $title->getNamespace() );
 	}
 
 	private function assertNamespaceEnabled( int $namespace ): void {
