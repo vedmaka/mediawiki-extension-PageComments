@@ -5,8 +5,10 @@
 		]
 	},
 	"pagecomments-desc": "Extension description shown on Special:Version.",
+	"right-pagecomments-read": "User right label: can read page comments.",
 	"right-pagecomments-write": "User right label: can write page comments.",
 	"right-pagecomments-moderate": "User right label: can moderate page comments.",
+	"action-pagecomments-read": "Permission description shown in user rights UI for read access to page comments.",
 	"pagecomments-ui-title": "Sidebar title for page comments panel.",
 	"pagecomments-ui-close": "Label for button that hides the off-canvas comments panel.",
 	"pagecomments-ui-edit": "Label for action that edits a comment inside a thread.",

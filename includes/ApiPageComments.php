@@ -27,6 +27,7 @@ class ApiPageComments extends ApiBase {
 		$action = $params['pcaction'];
 
 		if ( $action === self::ACTION_LIST ) {
+			$this->assertCanRead();
 			$this->runList( (int)$params['pageid'] );
 			return;
 		}
@@ -304,13 +305,29 @@ class ApiPageComments extends ApiBase {
 			$this->dieWithError( 'apierror-mustbeloggedin-generic', 'notloggedin' );
 		}
 
+		$this->assertCanRead();
 		$permissionManager = MediaWikiServices::getInstance()->getPermissionManager();
-		if ( !$permissionManager->userHasRight( $user, 'pagecomments-write' ) ) {
-			$this->dieWithError(
-				'pagecomments-api-error-permission-denied',
-				'pagecomments-permission-denied'
-			);
+		if ( $permissionManager->userHasRight( $user, 'pagecomments-write' ) ) {
+			return;
 		}
+
+		$this->dieWithError(
+			'pagecomments-api-error-permission-denied',
+			'pagecomments-permission-denied'
+		);
+	}
+
+	private function assertCanRead(): void {
+		$user = $this->getUser();
+		$permissionManager = MediaWikiServices::getInstance()->getPermissionManager();
+		if ( $permissionManager->userHasRight( $user, 'pagecomments-read' ) ) {
+			return;
+		}
+
+		$this->dieWithError(
+			'pagecomments-api-error-permission-denied',
+			'pagecomments-permission-denied'
+		);
 	}
 
 	private function getTitleFromPageId( int $pageId ): Title {

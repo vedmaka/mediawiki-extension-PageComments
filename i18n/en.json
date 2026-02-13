@@ -5,8 +5,10 @@
 		]
 	},
 	"pagecomments-desc": "Adds Google-Doc-style inline page comments for configured namespaces.",
+	"right-pagecomments-read": "Read page comments",
 	"right-pagecomments-write": "Create page comments and replies",
 	"right-pagecomments-moderate": "Moderate page comments",
+	"action-pagecomments-read": "read page comments",
 	"action-pagecomments-write": "create and edit page comments",
 	"action-pagecomments-moderate": "moderate page comments",
 	"apihelp-pagecomments-summary": "Manage inline page comments.",
@@ -55,5 +57,5 @@
 	"pagecomments-api-error-thread-not-found": "Comment thread not found.",
 	"pagecomments-api-error-comment-not-found": "Comment not found.",
 	"pagecomments-api-error-parent-comment-not-found": "Parent comment not found.",
-	"pagecomments-api-error-permission-denied": "You are not allowed to write page comments."
+	"pagecomments-api-error-permission-denied": "You are not allowed to access page comments."
 }

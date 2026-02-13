@@ -5,6 +5,7 @@ use MediaWiki\Extension\PageComments\Hooks\PageDisplayHooks;
 use MediaWiki\Output\OutputPage;
 use MediaWiki\Request\FauxRequest;
 use MediaWiki\Title\Title;
+use MediaWiki\User\User;
 
 /**
  * @covers \MediaWiki\Extension\PageComments\Hooks\PageDisplayHooks
@@ -63,6 +64,40 @@ class PageDisplayHooksNamespaceConfigTest extends MediaWikiIntegrationTestCase {
 		$this->assertArrayNotHasKey( 'wgPageComments', $out->getJsConfigVars() );
 	}
 
+	/**
+	 * BeforePageDisplay does not inject module/config when user cannot read comments.
+	 */
+	public function testSkipsModuleWithoutReadRight(): void {
+		$title = $this->createExistingTitleInNamespace( NS_PROJECT );
+		$user = $this->getTestUser()->getUser();
+		$this->overrideUserPermissions( $user, [] );
+		$out = $this->newOutputPageForTitle( $title, 'view', $user );
+		$skin = $this->createMock( Skin::class );
+
+		PageDisplayHooks::onBeforePageDisplay( $out, $skin );
+
+		$this->assertNotContains( 'ext.pagecomments.app', $out->getModules() );
+		$this->assertArrayNotHasKey( 'wgPageComments', $out->getJsConfigVars() );
+	}
+
+	/**
+	 * BeforePageDisplay injects module for read-only user and exposes canWrite=false.
+	 */
+	public function testLoadsModuleForReadOnlyUser(): void {
+		$title = $this->createExistingTitleInNamespace( NS_PROJECT );
+		$user = $this->getTestUser()->getUser();
+		$this->overrideUserPermissions( $user, [ 'pagecomments-read' ] );
+		$out = $this->newOutputPageForTitle( $title, 'view', $user );
+		$skin = $this->createMock( Skin::class );
+
+		PageDisplayHooks::onBeforePageDisplay( $out, $skin );
+
+		$this->assertContains( 'ext.pagecomments.app', $out->getModules() );
+		$config = $out->getJsConfigVars()['wgPageComments'] ?? null;
+		$this->assertIsArray( $config );
+		$this->assertFalse( (bool)$config['canWrite'] );
+	}
+
 	private function createExistingTitleInNamespace( int $namespace ): Title {
 		$title = Title::newFromText(
 			'PageComments Hook ' . wfRandomString(),
@@ -72,9 +107,14 @@ class PageDisplayHooksNamespaceConfigTest extends MediaWikiIntegrationTestCase {
 		return $page->getTitle();
 	}
 
-	private function newOutputPageForTitle( Title $title, string $action ): OutputPage {
+	private function newOutputPageForTitle(
+		Title $title,
+		string $action,
+		?User $user = null
+	): OutputPage {
 		$context = RequestContext::getMain();
 		$context->setRequest( new FauxRequest( [ 'action' => $action ] ) );
+		$context->setUser( $user ?? $this->getTestUser()->getUser() );
 		$out = new OutputPage( $context );
 		$out->setTitle( $title );
 		return $out;

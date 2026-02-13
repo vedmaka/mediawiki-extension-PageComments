@@ -26,11 +26,16 @@
 		"pagecomments": "MediaWiki\\Extension\\PageComments\\ApiPageComments"
 	},
 	"AvailableRights": [
+		"pagecomments-read",
 		"pagecomments-write",
 		"pagecomments-moderate"
 	],
 	"GroupPermissions": {
+		"*": {
+			"pagecomments-read": true
+		},
 		"user": {
+			"pagecomments-read": true,
 			"pagecomments-write": true
 		},
 		"sysop": {

@@ -93,6 +93,42 @@ class ApiPageCommentsNamespaceConfigTest extends ApiTestCase {
 	}
 
 	/**
+	 * List operation requires pagecomments-read right.
+	 */
+	public function testListRejectedWithoutReadRight(): void {
+		$pageId = $this->getPageIdInNamespace( NS_PROJECT );
+		$testUser = $this->getTestUser();
+		$this->overrideUserPermissions( $testUser->getUser(), [] );
+		$author = $testUser->getAuthority();
+
+		$this->expectApiErrorCode( 'pagecomments-permission-denied' );
+		$this->doApiRequest( [
+			'action' => 'pagecomments',
+			'pcaction' => 'list',
+			'pageid' => $pageId,
+		], null, false, $author );
+	}
+
+	/**
+	 * Create operation requires pagecomments-write right even when read is allowed.
+	 */
+	public function testCreateRejectedWithoutWriteRight(): void {
+		$pageId = $this->getPageIdInNamespace( NS_PROJECT );
+		$testUser = $this->getTestUser();
+		$this->overrideUserPermissions( $testUser->getUser(), [ 'pagecomments-read' ] );
+		$author = $testUser->getAuthority();
+
+		$this->expectApiErrorCode( 'pagecomments-permission-denied' );
+		$this->doApiRequestWithToken( [
+			'action' => 'pagecomments',
+			'pcaction' => 'create',
+			'pageid' => $pageId,
+			'anchor' => $this->buildAnchorJson(),
+			'body' => 'Should fail without write right',
+		], null, $author, 'csrf' );
+	}
+
+	/**
 	 * Reply/edit/resolve/delete mutations work end-to-end in an enabled namespace.
 	 */
 	public function testMutationsWorkInEnabledNamespace(): void {

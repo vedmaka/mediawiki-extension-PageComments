@@ -33,6 +33,9 @@ class PageDisplayHooks {
 
 		$user = $out->getUser();
 		$permissionManager = MediaWikiServices::getInstance()->getPermissionManager();
+		if ( !$permissionManager->userHasRight( $user, 'pagecomments-read' ) ) {
+			return;
+		}
 		$canWrite = $user->isNamed() && $permissionManager->userHasRight( $user, 'pagecomments-write' );
 
 		$out->addModules( 'ext.pagecomments.app' );

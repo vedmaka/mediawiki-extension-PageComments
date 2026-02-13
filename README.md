@@ -30,7 +30,8 @@ php maintenance/run.php update
 
 ## Rights
 
-- `pagecomments-write`: create comments and replies (granted to `user` by default).
+- `pagecomments-read`: allows reading comments (panel/API list); granted to `*` and `user` by default.
+- `pagecomments-write`: allows creating comments/replies for logged-in users; granted to `user` by default.
 - `pagecomments-moderate`: reserved moderation right (granted to `sysop` by default).
 
 ## Config
