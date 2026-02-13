@@ -52,6 +52,10 @@ Action API: `action=pagecomments`
 - `pcaction=resolve&threadid=<id>&token=<csrf>`
 - `pcaction=reopen&threadid=<id>&token=<csrf>`
 
+## License
+
+MIT (see `LICENSE`).
+
 ## Known limits
 
 - No realtime syncing between users.

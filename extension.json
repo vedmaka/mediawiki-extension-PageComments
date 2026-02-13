@@ -2,11 +2,11 @@
 	"name": "PageComments",
 	"version": "0.1.0",
 	"author": [
-		"Alexey"
+		"Alexey <vedmaka>"
 	],
 	"url": "https://www.mediawiki.org/wiki/Extension:PageComments",
 	"descriptionmsg": "pagecomments-desc",
-	"license-name": "GPL-2.0-or-later",
+	"license-name": "MIT",
 	"type": "other",
 	"requires": {
 		"MediaWiki": ">= 1.43.0",
