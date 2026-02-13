@@ -1,7 +1,7 @@
 {
 	"@metadata": {
 		"authors": [
-			"Alexey"
+			"Alexey <vedmaka>"
 		]
 	},
 	"pagecomments-desc": "Adds Google-Doc-style inline page comments for configured namespaces.",

@@ -22,6 +22,7 @@ class SchemaHooks {
 			$threadFile = "{$base}/sql/sqlite/pagecomments_thread.sql";
 			$commentFile = "{$base}/sql/sqlite/pagecomments_comment.sql";
 		} else {
+			// mysql
 			$threadFile = "{$base}/sql/pagecomments_thread.sql";
 			$commentFile = "{$base}/sql/pagecomments_comment.sql";
 		}
