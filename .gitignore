@@ -1,0 +1,12 @@
+/vendor/
+/node_modules/
+/.eslintcache
+/.stylelintcache
+
+# Editors
+*.kate-swp
+*~
+\#*#
+.#*
+.*.swp
+*.orig
